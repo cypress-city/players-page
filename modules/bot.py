@@ -5,6 +5,24 @@ import json
 import os
 
 
+class Confirm(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=60)
+        self.value = None
+
+    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
+    async def confirm(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.value = True
+        self.stop()
+
+    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.gray)
+    async def cancel(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.value = False
+        self.stop()
+
+
 class Bot(commands.Bot):  # main bot class
     def __init__(self):
         intents = discord.Intents.default()
@@ -29,13 +47,17 @@ class Bot(commands.Bot):  # main bot class
         with open(filename, "w") as f:
             json.dump(self.tokens, f)
 
-    def add_token(self, user: discord.User, token: str):
+    def set_token(self, user: discord.User, token: str):
         self.tokens[str(user.id)] = token
         self.save_tokens()
 
     def get_token(self, user: discord.User) -> str | None:
         return self.tokens.get(str(user.id))
 
+    def remove_token(self, user: discord.User):
+        self.tokens.pop(str(user.id))
+        self.save_tokens()
+
     async def setup_hook(self) -> None:
-        for extension in ["modules.register", "modules.submit", "modules.admin"]:
+        for extension in ["modules.token", "modules.submit", "modules.admin", "modules.help"]:
             await self.load_extension(extension)

@@ -113,8 +113,8 @@ class SubmitCog(commands.Cog):
         if not (token := self.bot.get_token(inter.user)):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Register first!",
-                desc="Before you can submit times, you need to register your self-submit token with the bot using "
-                     "the `/register` command."
+                desc="Before you can submit times, you need to share your self-submit token with the bot using "
+                     "the `/token set` command. Check `/help` for more information."
             ), ephemeral=True)
 
         if not (reg := re.fullmatch(r"(?P<min>[0-9]):(?P<sec>[0-9]{2}\.[0-9]{3})", time)):
@@ -133,7 +133,7 @@ class SubmitCog(commands.Cog):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Something went wrong.",
                 desc="The bot could not connect to the Player's Page. Try again in a few minutes."
-            ))
+            ), ephemeral=True)
 
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig)
         if response.status_code == 200:
@@ -146,7 +146,7 @@ class SubmitCog(commands.Cog):
                 title="⚠️ Something went wrong.",
                 desc=f"The bot encountered an error in submitting your time.\n"
                      f"`{response.status_code} {response.text}`"
-            ))
+            ), ephemeral=True)
 
 
 async def setup(bot: Bot):
