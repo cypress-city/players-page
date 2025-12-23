@@ -23,24 +23,24 @@ class AdminCog(commands.Cog):
     async def ping_command(self, ctx: commands.Context):
         message = await ctx.send(
             "🏓 Discord latency: ...\n"
-            "🏓 Player's Page latency: ..."
+            "🏓 Players' Page latency: ..."
         )
         discord_latency = round((message.created_at - ctx.message.created_at).total_seconds() * 1000)
         await message.edit(
             content=f"🏓 Discord latency: {discord_latency} ms\n"
-                    f"🏓 Player's Page latency: ..."
+                    f"🏓 Players' Page latency: ..."
         )
         response = requests.get("https://www.mariokart64.com/")
         pp_latency = round(response.elapsed.total_seconds() * 1000)
         if response.status_code == 200:
             await message.edit(
                 content=f"🏓 Discord latency: {discord_latency} ms\n"
-                        f"🏓 Player's Page latency: {pp_latency} ms"
+                        f"🏓 Players' Page latency: {pp_latency} ms"
             )
         else:
             await message.edit(
                 content=f"🏓 Discord latency: {discord_latency} ms\n"
-                        f"🏓 Player's Page latency: ⚠️ `Error {response.status_code}`"
+                        f"🏓 Players' Page latency: ⚠️ `Error {response.status_code}`"
             )
 
     @commands.command(name="sync", hidden=True)

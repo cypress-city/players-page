@@ -1,5 +1,5 @@
 # players-page
-A Discord integration for the Mario Kart World Player's Page.
+A Discord integration for the Mario Kart World Players' Page.
 
 ## Setup
 1. Create a `.env` file in the main directory with the token for your Discord application:

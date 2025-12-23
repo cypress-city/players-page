@@ -7,60 +7,7 @@ import bs4
 
 from modules.bot import Bot
 from modules.embeds import green_embed, red_embed
-
-
-class Course:
-    def __init__(self, abbrev: str, name: str, id_no: int, source_game: str = ""):
-        self.name = name
-        self.abbrev = abbrev
-        self.id = id_no
-        self.source_game = source_game
-
-    @property
-    def game_and_name(self):
-        return f"{(self.source_game+' ') if self.source_game else ''}{self.name}"
-
-    @property
-    def full_display(self):
-        return f"[{self.abbrev}] {self.game_and_name}"
-
-    def closeness(self, user_input: str):
-        term = user_input.lower()
-        return 2 if term in self.abbrev.lower() else 1 if term in self.name.lower() else 0
-
-
-courses = [
-    Course("MBC", "Mario Bros. Circuit", 0),
-    Course("CC", "Crown City", 1),
-    Course("WS", "Whistlestop Summit", 2),
-    Course("DKS", "DK Spaceport", 3),
-    Course("rDH", "Desert Hills", 4, "DS"),
-    Course("rSGB", "Shy Guy Bazaar", 5, "3DS"),
-    Course("rWS", "Wario Stadium", 6, "N64"),
-    Course("rAF", "Airship Fortress", 7, "DS"),
-    Course("rDKP", "DK Pass", 8, "DS"),
-    Course("SP", "Starview Peak", 9),
-    Course("rSHS", "Sky-High Sundae", 10, "Tour"),
-    Course("rWSh", "Wario Shipyard", 11, "3DS"),
-    Course("rKTB", "Koopa Troopa Beach", 12, "SNES"),
-    Course("FO", "Faraway Oasis", 13),
-    Course("PS", "Peach Stadium", 14),
-    Course("rPB", "Peach Beach", 15, "GCN"),
-    Course("SSS", "Salty Salty Speedway", 16),
-    Course("rDDJ", "Dino Dino Jungle", 17, "GCN"),
-    Course("GBR", "Great ? Block Ruins", 18),
-    Course("CCF", "Cheep Cheep Falls", 19),
-    Course("DD", "Dandelion Depths", 20),
-    Course("BCi", "Boo Cinema", 21),
-    Course("DBB", "Dry Bones Burnout", 22),
-    Course("rMMM", "Moo Moo Meadows", 23, "Wii"),
-    Course("rCM", "Choco Mountain", 24, "N64"),
-    Course("rTF", "Toad's Factory", 25, "Wii"),
-    Course("BC", "Bowser's Castle", 26),
-    Course("AH", "Acorn Heights", 27),
-    Course("rMC", "Mario Circuit", 28, "SNES"),
-    Course("RR", "Rainbow Road", 29)
-]
+from modules.courses import courses
 
 
 async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
@@ -103,7 +50,7 @@ class SubmitCog(commands.Cog):
 
     @discord.app_commands.command(
         name="submit",
-        description="Submit a time to the Player's Page."
+        description="Submit a time to the Players' Page."
     )
     @discord.app_commands.autocomplete(course=course_autocomplete)
     @discord.app_commands.describe(
@@ -132,7 +79,7 @@ class SubmitCog(commands.Cog):
         except discord.HTTPException:
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Something went wrong.",
-                desc="The bot could not connect to the Player's Page. Try again in a few minutes."
+                desc="The bot could not connect to the Players' Page. Try again in a few minutes."
             ), ephemeral=True)
 
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig)

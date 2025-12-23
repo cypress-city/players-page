@@ -17,15 +17,16 @@ class HelpCog(commands.Cog):
     async def help_command(self, inter: discord.Interaction):
         await inter.response.send_message(embed=blue_embed(
             title="ℹ️ Help",
-            desc="If you haven't made one already, start by **[making an account]"
-                 "(https://www.mariokart64.com/mkworld/signup.php)** on the Player's Page.\n\n"
+            desc="This is a Discord integration for the **Mario Kart World Players' Page**, a community time trial "
+                 "leaderboard. If you'd like to participate, start by **[making an account]"
+                 "(https://www.mariokart64.com/mkworld/signup.php)** on the Players' Page.\n\n"
                  "Once you do, you'll be given a \"self-submit token\", a long string of numbers and letters. "
                  "To start submitting times via Discord, share this token with the bot using the command "
                  "`/token set`. You can later view your token using the command `/token view`. "
                  "Other users will never see your token.\n\n"
-                 "After registering your token, you can begin submitting times to the Player's Page using the command "
+                 "After registering your token, you can begin submitting times to the Players' Page using the command "
                  "`/submit`. Select a track and input your time, and the bot will automatically forward it "
-                 "to the Player's Page."
+                 "to the Players' Page."
         ))
 
 

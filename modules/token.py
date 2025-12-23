@@ -66,7 +66,7 @@ class TokenCog(commands.Cog):
                          "and the letters a-f, in lowercase. "
                          "Make sure you've got the right token and try again.\n\n"
                          "If you don't know what a self-submit token is, start by [making an account]"
-                         "(https://www.mariokart64.com/mkworld/signup.php) on the Player's Page."
+                         "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
                 ), ephemeral=True)
             else:
                 self.bot.set_token(inter.user, token)
@@ -90,7 +90,7 @@ class TokenCog(commands.Cog):
                 title="⚠️ No token registered.",
                 desc="Use `/token set` to register your self-submit token with the bot.\n\n"
                      "If you don't know what a self-submit token is, start by [making an account]"
-                     "(https://www.mariokart64.com/mkworld/signup.php) on the Player's Page."
+                     "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
             ), ephemeral=True)
 
     @options.command(
@@ -116,9 +116,8 @@ class TokenCog(commands.Cog):
                 title="⚠️ No token registered.",
                 desc="Use `/token set` to register your self-submit token with the bot.\n\n"
                      "If you don't know what a self-submit token is, start by [making an account]"
-                     "(https://www.mariokart64.com/mkworld/signup.php) on the Player's Page."
+                     "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
             ), ephemeral=True)
-
 
 
 async def setup(bot: Bot):
