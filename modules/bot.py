@@ -59,5 +59,5 @@ class Bot(commands.Bot):  # main bot class
         self.save_tokens()
 
     async def setup_hook(self) -> None:
-        for extension in ["modules.token", "modules.submit", "modules.admin", "modules.help"]:
+        for extension in ["modules.token", "modules.submit", "modules.admin", "modules.help", "modules.player"]:
             await self.load_extension(extension)

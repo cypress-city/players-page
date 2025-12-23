@@ -6,12 +6,12 @@ import requests
 import bs4
 
 from modules.bot import Bot
-from modules.embeds import green_embed, red_embed
+from modules.embeds import green_embed, red_embed, could_not_connect
 from modules.courses import courses
 
 
 async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-    matches = sorted([g for g in courses if g.closeness(current)], key=lambda c: -c.closeness(current))
+    matches = sorted([g for g in courses.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
     return [discord.app_commands.Choice(name=g.full_display, value=g.id) for g in matches][:25]
 
 
@@ -77,10 +77,7 @@ class SubmitCog(commands.Cog):
         try:
             auth_timestamp, auth_sig = self.get_auth_sig()
         except discord.HTTPException:
-            return await inter.response.send_message(embed=red_embed(
-                title="⚠️ Something went wrong.",
-                desc="The bot could not connect to the Players' Page. Try again in a few minutes."
-            ), ephemeral=True)
+            return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig)
         if response.status_code == 200:

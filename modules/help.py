@@ -26,7 +26,9 @@ class HelpCog(commands.Cog):
                  "Other users will never see your token.\n\n"
                  "After registering your token, you can begin submitting times to the Players' Page using the command "
                  "`/submit`. Select a track and input your time, and the bot will automatically forward it "
-                 "to the Players' Page."
+                 "to the Players' Page.\n\n"
+                 "View any player's timesheet using the command `/player`. "
+                 "You can also compare two players' timesheets using the command `/compare`."
         ))
 
 
