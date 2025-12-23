@@ -1,4 +1,6 @@
+import requests
 from discord.ext import commands
+
 from modules.bot import Bot
 
 
@@ -17,12 +19,29 @@ class AdminCog(commands.Cog):
             await ctx.send("😴 Stopping bot.")
             await self.bot.close()
 
-    @commands.command(name="ping", hidden=True)
+    @commands.command(name="ping")
     async def ping_command(self, ctx: commands.Context):
-        message = await ctx.send(":ping_pong:!")
-        return await message.edit(
-            content=f":ping_pong:! ({round((message.created_at - ctx.message.created_at).microseconds / 1000)} ms)"
+        message = await ctx.send(
+            "🏓 Discord latency: ...\n"
+            "🏓 Player's Page latency: ..."
         )
+        discord_latency = round((message.created_at - ctx.message.created_at).total_seconds() * 1000)
+        await message.edit(
+            content=f"🏓 Discord latency: {discord_latency} ms\n"
+                    f"🏓 Player's Page latency: ..."
+        )
+        response = requests.get("https://www.mariokart64.com/")
+        pp_latency = round(response.elapsed.total_seconds() * 1000)
+        if response.status_code == 200:
+            await message.edit(
+                content=f"🏓 Discord latency: {discord_latency} ms\n"
+                        f"🏓 Player's Page latency: {pp_latency} ms"
+            )
+        else:
+            await message.edit(
+                content=f"🏓 Discord latency: {discord_latency} ms\n"
+                        f"🏓 Player's Page latency: ⚠️ `Error {response.status_code}`"
+            )
 
     @commands.command(name="sync", hidden=True)
     async def sync_command(self, ctx: commands.Context):
