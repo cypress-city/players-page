@@ -37,13 +37,19 @@ class TokenCog(commands.Cog):
     )
     @discord.app_commands.describe(token="Player's Page self-submit token")
     async def register_command(self, inter: discord.Interaction, token: str):
+        token = token.strip(" \n")
         if current_token := self.bot.get_token(inter.user):
+            if token == current_token:
+                return await inter.response.send_message(embed=blue_embed(
+                    title="🔑 This is already your current token.",
+                    desc="No change was made."
+                ), ephemeral=True)
             view = Confirm()
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
                 desc=f"You already have the following token registered with the bot:\n```\n{current_token}\n```\n"
                      f"Press **`Confirm`** to overwrite this token and set a new one. "
-                     f"Press **`Cancel`** to keep the current token."
+                     f"Press **`Cancel`** to keep your current token."
             ), view=view, ephemeral=True)
             await view.wait()
             if view.value is True:
@@ -57,7 +63,10 @@ class TokenCog(commands.Cog):
                     self.bot.set_token(inter.user, token)
                     await inter.edit_original_response(embed=green_embed(title="✅ New token registered!"), view=None)
             else:
-                await inter.edit_original_response(embed=blue_embed(title="🔑 Keeping current token."), view=None)
+                await inter.edit_original_response(embed=blue_embed(
+                    title="🔑 No change was made.",
+                    desc="Interaction timed out." if view.value is None else None
+                ), view=None)
         else:
             if not re.fullmatch(r"[0-9a-f]{32}", token):
                 await inter.response.send_message(embed=red_embed(
