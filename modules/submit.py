@@ -88,24 +88,32 @@ class SubmitCog(commands.Cog):
         if response.status_code == 200:
             print(response.text)
             try:
-                player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]), force_load=True)
+                try:
+                    if "is slower" in response.text:
+                        player = get_player(name=re.search(r"(?<=<i>).+(?=,n,)", response.text)[0], force_load=True)
+                    else:
+                        player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]), force_load=True)
+                except TypeError:  # if the response text looks nonstandard
+                    player = None
                 if not player:
                     return await inter.response.send_message(embed=green_embed(
                         title="✅ Record updated!",
-                        desc=f"Submitted a time of `{time}` on {course.game_and_name}." +
+                        desc=f"Submitted a time of `{time}` on [{course.game_and_name}]({course.url})." +
                              (f"\n> {comments}" if comments != "N/A" else "")
                     ))
                 rank = player.timesheet()[course.id][1]
             except discord.HTTPException:
                 return await inter.response.send_message(embed=green_embed(
                     title="✅ Record updated!",
-                    desc=f"Submitted a time of `{time}` on {course.game_and_name}." +
+                    desc=f"Submitted a time of `{time}` on [{course.game_and_name}]({course.url})." +
                          (f"\n> {comments}" if comments != "N/A" else "")
                 ))
             return await inter.response.send_message(embed=green_embed(
                 title="✅ Record updated!",
-                desc=f"Submitted a time of `{time}` ({ordinal(rank)}{rank_emoji(rank)}) on {course.game_and_name}." +
-                     (f"\n> {comments}" if comments != "N/A" else "")
+                desc=f"Submitted a time of `{time}` ({ordinal(rank)}{rank_emoji(rank)}) on "
+                     f"[{course.game_and_name}]({course.url})." +
+                     (f"\n> {comments}" if comments != "N/A" else ""),
+                url=player.profile
             ))
         else:
             return await inter.response.send_message(embed=red_embed(

@@ -17,6 +17,10 @@ class Course:
     def full_display(self):
         return f"[{self.abbrev}] {self.game_and_name}"
 
+    @property
+    def url(self):
+        return f"https://www.mariokart64.com/mkworld/course.php?system=Normal&cid={self.id}"
+
     def closeness(self, user_input: str):
         term = user_input.lower()
         return 2 if term in self.abbrev.lower() else 1 if term in self.name.lower() else 0

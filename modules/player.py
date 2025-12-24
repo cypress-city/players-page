@@ -182,10 +182,13 @@ def refresh_player_list():
         players_last_updated = time.time()
 
 
-def get_player(id_no: int, force_load: bool = False) -> Player | None:
+def get_player(id_no: int = None, name: str = None, force_load: bool = False) -> Player | None:
     if time.time() - players_last_updated > 60 or (id_no not in players and force_load):
         refresh_player_list()
-    return players.get(id_no)
+    if id_no is not None:
+        return players.get(id_no)
+    elif matches := [g for g in players.values() if g.name == name]:
+        return matches[0]
 
 
 async def player_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
