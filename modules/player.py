@@ -4,7 +4,7 @@ from discord.ext import commands
 import requests
 import time
 
-from modules.courses import courses
+from modules.courses import courses, rank_emoji
 from modules.embeds import blue_embed, could_not_connect
 
 
@@ -116,8 +116,7 @@ class Player:
             if course.cup != current_cup:
                 current_cup = course.cup
                 times += "\n"
-            emoji = " 🏆" if v[1] == 1 else " 🥈" if v[1] == 2 else " 🥉" if v[1] == 3 else " 🔹" if v[1] <= 10 else ""
-            times += f"**{course.game_and_name}** - `{pretty_time(v[0])}` - \\#{v[1]}{emoji}\n"
+            times += f"**{course.game_and_name}** - `{pretty_time(v[0])}` - \\#{v[1]}{rank_emoji(v[1])}\n"
         return blue_embed(
             title=f"Player: {self.name} {self.flag}",
             desc=times.strip("\n") if times else "Player has no times submitted.",
@@ -180,6 +179,12 @@ def refresh_player_list():
         players.update({g.id: g for g in player_list})
         global players_last_updated
         players_last_updated = time.time()
+
+
+def get_player(id_no: int) -> Player | None:
+    if time.time() - players_last_updated > 600:
+        refresh_player_list()
+    return players.get(id_no)
 
 
 async def player_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:

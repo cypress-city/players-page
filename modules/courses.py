@@ -1,3 +1,6 @@
+import discord
+
+
 class Course:
     def __init__(self, abbrev: str, name: str, id_no: int, cup: str, source_game: str = ""):
         self.name = name
@@ -51,3 +54,12 @@ courses: dict[int, Course] = {
     28: Course("rMC", "Mario Circuit", 28, "Special", "SNES"),
     29: Course("RR", "Rainbow Road", 29, "Special")
 }
+
+
+async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
+    matches = sorted([g for g in courses.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
+    return [discord.app_commands.Choice(name=g.full_display, value=g.id) for g in matches][:25]
+
+
+def rank_emoji(rank: int) -> str:
+    return " 🏆" if rank == 1 else " 🥈" if rank == 2 else " 🥉" if rank == 3 else " 🔹" if rank <= 10 else ""

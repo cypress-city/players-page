@@ -7,12 +7,8 @@ import bs4
 
 from modules.bot import Bot
 from modules.embeds import green_embed, red_embed, could_not_connect
-from modules.courses import courses
-
-
-async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-    matches = sorted([g for g in courses.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
-    return [discord.app_commands.Choice(name=g.full_display, value=g.id) for g in matches][:25]
+from modules.courses import courses, course_autocomplete
+from modules.player import get_player
 
 
 def submit_time(
@@ -30,6 +26,15 @@ def submit_time(
         "sig": sig
     }
     return requests.post("https://www.mariokart64.com/mkworld/quick_entry_form.php", data=form_data)
+
+
+def ordinal(n: int) -> str:
+    return str(n) + (
+        "st" if (n % 10 == 1 and n % 100 != 11) else
+        "nd" if (n % 10 == 2 and n % 100 != 12) else
+        "rd" if (n % 10 == 3 and n % 100 != 13) else
+        "th"
+    )
 
 
 class SubmitCog(commands.Cog):
@@ -50,18 +55,19 @@ class SubmitCog(commands.Cog):
 
     @discord.app_commands.command(
         name="submit",
-        description="Submit a time to the Players' Page."
+        description="Submit a record to the Players' Page."
     )
     @discord.app_commands.autocomplete(course=course_autocomplete)
     @discord.app_commands.describe(
-        course="Track name", time="Time formatted as 1:23.456"
+        course="Track name", time="Time formatted as 1:23.456",
+        comments="Comments (e.g. video links), max. of 127 characters"
     )
-    async def submit_command(self, inter: discord.Interaction, course: int, time: str):
+    async def submit_command(self, inter: discord.Interaction, course: int, time: str, comments: str = "N/A"):
         if not (token := self.bot.get_token(inter.user)):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Register first!",
-                desc="Before you can submit times, you need to share your self-submit token with the bot using "
-                     "the `/token set` command. Check `/help` for more information."
+                desc="Before you can submit records, you need to share your self-submit token with the bot using "
+                     "the `/token set` command. Check `/token help` for more information."
             ), ephemeral=True)
 
         if not (reg := re.fullmatch(r"(?P<min>[0-9]):(?P<sec>[0-9]{2}\.[0-9]{3})", time)):
@@ -69,6 +75,14 @@ class SubmitCog(commands.Cog):
                 title="⚠️ Formatting error.",
                 desc="Times should be in the format: `1:23.456`"
             ), ephemeral=True)
+
+        if len(comments) > 127:
+            return await inter.response.send_message(embed=red_embed(
+                title="⚠️ Comments must be 127 characters or shorter.",
+                desc=f"Your comment was {len(comments)} characters long."
+            ))
+        elif not comments:
+            comments = "N/A"
 
         time_as_float = int(reg.group("min")) * 60 + float(reg.group("sec"))
         date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
@@ -79,11 +93,15 @@ class SubmitCog(commands.Cog):
         except discord.HTTPException:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
-        response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig)
+        response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig, comments=comments)
         if response.status_code == 200:
+            print(response.text)
+            player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]))
+            rank = player.timesheet()[course.id][1]
             return await inter.response.send_message(embed=green_embed(
-                title="✅ Time updated!",
-                desc=f"Submitted a time of `{time}` on {course.game_and_name}."
+                title="✅ Record updated!",
+                desc=f"Submitted a time of `{time}` ({ordinal(rank)}) on {course.game_and_name}." +
+                     (f"\n> {comments}" if comments != "N/A" else "")
             ))
         else:
             return await inter.response.send_message(embed=red_embed(
