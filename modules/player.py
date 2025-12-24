@@ -4,7 +4,7 @@ from discord.ext import commands
 import requests
 import time
 
-from modules.courses import courses, rank_emoji
+from modules.courses import courses, course_autocomplete, rank_emoji, ordinal
 from modules.embeds import blue_embed, could_not_connect
 
 
@@ -107,6 +107,9 @@ class Player:
         timesheet = self.timesheet()
         return {g: timesheet.get(g, (0.0, 0)) for g in courses}
 
+    def profile_embed(self, title_suffix: str = "", **kwargs):
+        return blue_embed(title=f"Player: {self.name} {self.flag}{title_suffix}", url=self.profile, **kwargs)
+
     def timesheet_embed(self) -> discord.Embed:
         timesheet = self.timesheet()
         times = ""
@@ -117,14 +120,12 @@ class Player:
                 current_cup = course.cup
                 times += "\n"
             times += f"**{course.game_and_name}** - `{pretty_time(v[0])}` - \\#{v[1]}{rank_emoji(v[1])}\n"
-        return blue_embed(
-            title=f"Player: {self.name} {self.flag}",
+        return self.profile_embed(
             desc=times.strip("\n") if times else "Player has no times submitted.",
             footer=(f"Total - {pretty_time(sum(g[0] for g in timesheet.values()), include_hour=True)} | "
                     f"AF - {round(sum(g[1] for g in timesheet.values()) / len(timesheet), 4)}"
                     if len(timesheet) == len(courses) else f"Courses - {len(timesheet)}/{len(courses)}"
-                    if timesheet else None),
-            url=self.profile
+                    if timesheet else None)
         )
 
     def compare_embed(self, opponent) -> discord.Embed:
@@ -181,14 +182,14 @@ def refresh_player_list():
         players_last_updated = time.time()
 
 
-def get_player(id_no: int) -> Player | None:
-    if time.time() - players_last_updated > 600:
+def get_player(id_no: int, force_load: bool = False) -> Player | None:
+    if time.time() - players_last_updated > 60 or (id_no not in players and force_load):
         refresh_player_list()
     return players.get(id_no)
 
 
 async def player_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-    if time.time() - players_last_updated > 600:
+    if time.time() - players_last_updated > 60:
         refresh_player_list()
     matches = sorted([g for g in players.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
     return [discord.app_commands.Choice(name=g.name, value=g.id) for g in matches][:25]
@@ -202,9 +203,28 @@ class PlayerCog(commands.Cog):
         name="player",
         description="View a player's timesheet."
     )
-    @discord.app_commands.autocomplete(player=player_autocomplete)
-    @discord.app_commands.describe(player="Player name")
-    async def player_command(self, inter: discord.Interaction, player: int):
+    @discord.app_commands.autocomplete(player=player_autocomplete, course=course_autocomplete)
+    @discord.app_commands.describe(player="Player name", course="Track name")
+    async def player_command(self, inter: discord.Interaction, player: int, course: int = -1):
+        if course != -1:
+            try:
+                player = get_player(player)
+                timesheet = player.timesheet()
+            except discord.HTTPException:
+                return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
+
+            if not timesheet.get(course):
+                return await inter.response.send_message(embed=player.profile_embed(
+                    desc=f"{player.name} has no time recorded on {courses[course].game_and_name}."
+                ))
+            else:
+                course = courses[course]
+                return await inter.response.send_message(embed=player.profile_embed(
+                    title_suffix=f" > {course.abbrev}",
+                    desc=f"**{course.game_and_name}** - `{pretty_time(timesheet[course.id][0])}` - "
+                         f"\\#{timesheet[course.id][1]}{rank_emoji(timesheet[course.id][1])}"
+                ))
+
         try:
             await inter.response.send_message(embed=players[player].timesheet_embed())
         except discord.HTTPException:

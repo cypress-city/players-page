@@ -50,7 +50,7 @@ class TokenCog(commands.Cog):
                  "- If you're already using the site to submit records, it's the same token you enter into "
                  "the \"update token\" box.\n"
                  "- If you've made an account, but don't know your update token, contact site staff (e.g. "
-                 "\\@vincent on Discord) and they can return it to you.\n"
+                 "\\@vincent or \\@fireball_37 on Discord) and they can return it to you.\n"
                  "- If you don't have an account, [sign up](https://www.mariokart64.com/mkworld/signup.php) and "
                  "write down your token somewhere after verifying your email.\n\n"
                  "Once you know this token, register it with the bot using the command `/token set`. The bot will "

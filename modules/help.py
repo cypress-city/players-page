@@ -23,13 +23,13 @@ class HelpCog(commands.Cog):
                  "Once you do, you'll be given a \"self-submit token\", a long string of numbers and letters. "
                  "To start submitting times via Discord, share this token with the bot using the command "
                  "`/token set`. You can later view your token using the command `/token view`. "
-                 "Other users will never see your token.\n\n"
+                 "Other users will never see your token. For more info, see `/token help`.\n\n"
                  "After registering your token, you can begin submitting times to the Players' Page using the command "
                  "`/submit`. Select a track and input your time, and the bot will automatically forward it "
                  "to the Players' Page.\n\n"
                  "View any player's timesheet using the command `/player`. "
                  "You can also compare two players' timesheets using the command `/compare`."
-        ))
+        ), ephemeral=True)
 
 
 async def setup(bot: Bot):

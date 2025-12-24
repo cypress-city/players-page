@@ -7,7 +7,7 @@ import bs4
 
 from modules.bot import Bot
 from modules.embeds import green_embed, red_embed, could_not_connect
-from modules.courses import courses, course_autocomplete
+from modules.courses import courses, course_autocomplete, ordinal, rank_emoji
 from modules.player import get_player
 
 
@@ -26,15 +26,6 @@ def submit_time(
         "sig": sig
     }
     return requests.post("https://www.mariokart64.com/mkworld/quick_entry_form.php", data=form_data)
-
-
-def ordinal(n: int) -> str:
-    return str(n) + (
-        "st" if (n % 10 == 1 and n % 100 != 11) else
-        "nd" if (n % 10 == 2 and n % 100 != 12) else
-        "rd" if (n % 10 == 3 and n % 100 != 13) else
-        "th"
-    )
 
 
 class SubmitCog(commands.Cog):
@@ -96,11 +87,24 @@ class SubmitCog(commands.Cog):
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig, comments=comments)
         if response.status_code == 200:
             print(response.text)
-            player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]))
-            rank = player.timesheet()[course.id][1]
+            try:
+                player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]), force_load=True)
+                if not player:
+                    return await inter.response.send_message(embed=green_embed(
+                        title="✅ Record updated!",
+                        desc=f"Submitted a time of `{time}` on {course.game_and_name}." +
+                             (f"\n> {comments}" if comments != "N/A" else "")
+                    ))
+                rank = player.timesheet()[course.id][1]
+            except discord.HTTPException:
+                return await inter.response.send_message(embed=green_embed(
+                    title="✅ Record updated!",
+                    desc=f"Submitted a time of `{time}` on {course.game_and_name}." +
+                         (f"\n> {comments}" if comments != "N/A" else "")
+                ))
             return await inter.response.send_message(embed=green_embed(
                 title="✅ Record updated!",
-                desc=f"Submitted a time of `{time}` ({ordinal(rank)}) on {course.game_and_name}." +
+                desc=f"Submitted a time of `{time}` ({ordinal(rank)}{rank_emoji(rank)}) on {course.game_and_name}." +
                      (f"\n> {comments}" if comments != "N/A" else "")
             ))
         else:

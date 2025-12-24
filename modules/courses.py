@@ -63,3 +63,12 @@ async def course_autocomplete(inter: discord.Interaction, current: str) -> list[
 
 def rank_emoji(rank: int) -> str:
     return " 🏆" if rank == 1 else " 🥈" if rank == 2 else " 🥉" if rank == 3 else " 🔹" if rank <= 10 else ""
+
+
+def ordinal(n: int) -> str:
+    return str(n) + (
+        "st" if (n % 10 == 1 and n % 100 != 11) else
+        "nd" if (n % 10 == 2 and n % 100 != 12) else
+        "rd" if (n % 10 == 3 and n % 100 != 13) else
+        "th"
+    )
