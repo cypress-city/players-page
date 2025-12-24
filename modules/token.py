@@ -30,7 +30,7 @@ class TokenCog(commands.Cog):
         super().__init__()
         self.bot = bot
 
-    options = discord.app_commands.Group(name="token", description="Info about the token used to submit times.")
+    options = discord.app_commands.Group(name="token", description="Info about the token used to submit records.")
 
     @options.command(
         name="help",
@@ -39,8 +39,8 @@ class TokenCog(commands.Cog):
     async def help_command(self, inter: discord.Interaction):
         return await inter.response.send_message(embed=blue_embed(
             title="ℹ️ Self-Submit Tokens",
-            desc="In order to submit a time directly to the Players' Page, you need a **self-submit token:** a unique "
-                 "identifier that acts as a \"passkey\" for your account. It's given to you after you "
+            desc="In order to submit a record directly to the Players' Page, you need a **self-submit token:** a "
+                 "unique identifier that acts as a \"passkey\" for your account. It's given to you after you "
                  "[make an account](https://www.mariokart64.com/mkworld/signup.php) on the Players' Page and verify "
                  "your email. "
                  f"It looks something like this:\n```\n{str(uuid.uuid4()).replace('-', '')}\n```\n"
@@ -56,11 +56,11 @@ class TokenCog(commands.Cog):
                  "Once you know this token, register it with the bot using the command `/token set`. The bot will "
                  "save your token to your Discord account, and you can begin submitting through the bot directly "
                  "to the Players' Page using the command `/submit`."
-        ))
+        ), ephemeral=True)
 
     @options.command(
         name="set",
-        description="Register a self-submit token with the bot, so you can submit times. Other users won't see it."
+        description="Register a self-submit token with the bot, so you can submit records. Other users won't see it."
     )
     @discord.app_commands.describe(token="Player's Page self-submit token")
     async def register_command(self, inter: discord.Interaction, token: str):
@@ -104,14 +104,13 @@ class TokenCog(commands.Cog):
                     desc="Your self-submit token should be a 32-character string made up of only the digits 0-9 "
                          "and the letters a-f, in lowercase. "
                          "Make sure you've got the right token and try again.\n\n"
-                         "If you don't know what a self-submit token is, start by [making an account]"
-                         "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
+                         "If you don't know what a self-submit token is, check `/token help`."
                 ), ephemeral=True)
             else:
                 self.bot.set_token(inter.user, token)
                 await inter.response.send_message(embed=green_embed(
                     title="✅ Token registered!",
-                    desc="You can now begin submitting times with the `/submit` command."
+                    desc="You can now begin submitting records with the `/submit` command."
                 ), ephemeral=True)
 
     @options.command(
@@ -128,8 +127,7 @@ class TokenCog(commands.Cog):
             await inter.response.send_message(embed=red_embed(
                 title="⚠️ No token registered.",
                 desc="Use `/token set` to register your self-submit token with the bot.\n\n"
-                     "If you don't know what a self-submit token is, start by [making an account]"
-                     "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
+                     "If you don't know what a self-submit token is, check `/token help`."
             ), ephemeral=True)
 
     @options.command(
@@ -141,7 +139,7 @@ class TokenCog(commands.Cog):
             view = ConfirmDelete()
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
-                desc="Deleting your token will prevent you from submitting times via the bot until you set "
+                desc="Deleting your token will prevent you from submitting records via the bot until you set "
                      "another token. Press **`Delete`** to continue."
             ), view=view, ephemeral=True)
             await view.wait()
@@ -154,8 +152,7 @@ class TokenCog(commands.Cog):
             await inter.response.send_message(embed=red_embed(
                 title="⚠️ No token registered.",
                 desc="Use `/token set` to register your self-submit token with the bot.\n\n"
-                     "If you don't know what a self-submit token is, start by [making an account]"
-                     "(https://www.mariokart64.com/mkworld/signup.php) on the Players' Page."
+                     "If you don't know what a self-submit token is, check `/token help`."
             ), ephemeral=True)
 
 
