@@ -1,5 +1,6 @@
 import discord
 import re
+import uuid
 from discord.ext import commands
 
 from modules.bot import Bot, Confirm
@@ -32,6 +33,32 @@ class TokenCog(commands.Cog):
     options = discord.app_commands.Group(name="token", description="Info about the token used to submit times.")
 
     @options.command(
+        name="help",
+        description="Help with self-submit tokens."
+    )
+    async def help_command(self, inter: discord.Interaction):
+        return await inter.response.send_message(embed=blue_embed(
+            title="ℹ️ Self-Submit Tokens",
+            desc="In order to submit a time directly to the Players' Page, you need a **self-submit token:** a unique "
+                 "identifier that acts as a \"passkey\" for your account. It's given to you after you "
+                 "[make an account](https://www.mariokart64.com/mkworld/signup.php) on the Players' Page and verify "
+                 "your email. "
+                 f"It looks something like this:\n```\n{str(uuid.uuid4()).replace('-', '')}\n```\n"
+                 "-# There's about a [1 in 340,282,366,920,938,463,463,374,607,431,768,211,456 chance]"
+                 "(https://en.wikipedia.org/wiki/Universally_unique_identifier) that's your token, by the way.\n\n"
+                 "To submit your records over Discord, you need to **share this token with the bot.**\n"
+                 "- If you're already using the site to submit records, it's the same token you enter into "
+                 "the \"update token\" box.\n"
+                 "- If you've made an account, but don't know your update token, contact site staff (e.g. "
+                 "\\@vincent on Discord) and they can return it to you.\n"
+                 "- If you don't have an account, [sign up](https://www.mariokart64.com/mkworld/signup.php) and "
+                 "write down your token somewhere after verifying your email.\n\n"
+                 "Once you know this token, register it with the bot using the command `/token set`. The bot will "
+                 "save your token to your Discord account, and you can begin submitting through the bot directly "
+                 "to the Players' Page using the command `/submit`."
+        ))
+
+    @options.command(
         name="set",
         description="Register a self-submit token with the bot, so you can submit times. Other users won't see it."
     )
@@ -61,7 +88,10 @@ class TokenCog(commands.Cog):
                     ), view=None)
                 else:
                     self.bot.set_token(inter.user, token)
-                    await inter.edit_original_response(embed=green_embed(title="✅ New token registered!"), view=None)
+                    await inter.edit_original_response(embed=green_embed(
+                        title="✅ New token registered!",
+                        desc="You can continue using `/submit` as usual."
+                    ), view=None)
             else:
                 await inter.edit_original_response(embed=blue_embed(
                     title="🔑 No change was made.",
