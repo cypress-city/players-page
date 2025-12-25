@@ -57,7 +57,7 @@ class SubmitCog(commands.Cog):
         if not (token := self.bot.get_token(inter.user)):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Register first!",
-                desc="Before you can submit records, you need to share your self-submit token with the bot using "
+                desc="Before you can submit records, you need to share your update token with the bot using "
                      "the `/token set` command. Check `/token help` for more information."
             ), ephemeral=True)
 

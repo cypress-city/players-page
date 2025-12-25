@@ -34,16 +34,16 @@ class TokenCog(commands.Cog):
 
     @options.command(
         name="help",
-        description="Help with self-submit tokens."
+        description="Help with update tokens."
     )
     async def help_command(self, inter: discord.Interaction):
         return await inter.response.send_message(embed=blue_embed(
-            title="ℹ️ Self-Submit Tokens",
-            desc="In order to submit a record directly to the Players' Page, you need a **self-submit token:** a "
+            title="ℹ️ Update Tokens",
+            desc="In order to submit a record directly to the Players' Page, you need an **update token:** a "
                  "unique identifier that acts as a \"passkey\" for your account. It's given to you after you "
                  "[make an account](https://www.mariokart64.com/mkworld/signup.php) on the Players' Page and verify "
-                 "your email. "
-                 f"It looks something like this:\n```\n{str(uuid.uuid4()).replace('-', '')}\n```\n"
+                 "your email. After verifying, **don't close the tab** - this webpage contains your token. "
+                 f"It'll look something like this:\n```\n{str(uuid.uuid4()).replace('-', '')}\n```\n"
                  "-# (There's about a [1 in 340,282,366,920,938,463,463,374,607,431,768,211,456 chance]"
                  "(https://en.wikipedia.org/wiki/Universally_unique_identifier) that's your token, by the way.)\n\n"
                  "To submit your records over Discord, you need to **share this token with the bot.**\n"
@@ -61,9 +61,9 @@ class TokenCog(commands.Cog):
 
     @options.command(
         name="set",
-        description="Register a self-submit token with the bot, so you can submit records. Other users won't see it."
+        description="Register an update token with the bot, so you can submit records. Other users won't see it."
     )
-    @discord.app_commands.describe(token="Player's Page self-submit token")
+    @discord.app_commands.describe(token="Player's Page update token")
     async def register_command(self, inter: discord.Interaction, token: str):
         token = token.strip(" \n")
         if current_token := self.bot.get_token(inter.user):
@@ -75,7 +75,7 @@ class TokenCog(commands.Cog):
             view = Confirm()
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
-                desc=f"You already have the following token registered with the bot:\n```\n{current_token}\n```\n"
+                desc=f"You already have the following update token registered with the bot:\n```{current_token}```\n"
                      f"Press **`Confirm`** to overwrite this token and set a new one. "
                      f"Press **`Cancel`** to keep your current token."
             ), view=view, ephemeral=True)
@@ -84,13 +84,13 @@ class TokenCog(commands.Cog):
                 if not re.fullmatch(r"[0-9a-f]{32}", token):
                     await inter.edit_original_response(embed=red_embed(
                         title="⚠️ This doesn't look right.",
-                        desc="Your self-submit token should be a 32-character string made up of only the digits 0-9 "
+                        desc="Your update token should be a 32-character string made up of only the digits 0-9 "
                              "and the letters a-f, in lowercase. Make sure you've got the right token and try again."
                     ), view=None)
                 else:
                     self.bot.set_token(inter.user, token)
                     await inter.edit_original_response(embed=green_embed(
-                        title="✅ New token registered!",
+                        title="✅ New update token registered!",
                         desc="You can continue using `/submit` as usual."
                     ), view=None)
             else:
@@ -102,45 +102,45 @@ class TokenCog(commands.Cog):
             if not re.fullmatch(r"[0-9a-f]{32}", token):
                 await inter.response.send_message(embed=red_embed(
                     title="⚠️ This doesn't look right.",
-                    desc="Your self-submit token should be a 32-character string made up of only the digits 0-9 "
+                    desc="Your update token should be a 32-character string made up of only the digits 0-9 "
                          "and the letters a-f, in lowercase. "
                          "Make sure you've got the right token and try again.\n\n"
-                         "If you don't know what a self-submit token is, check `/token help`."
+                         "If you don't know what an update token is, check `/token help`."
                 ), ephemeral=True)
             else:
                 self.bot.set_token(inter.user, token)
                 await inter.response.send_message(embed=green_embed(
-                    title="✅ Token registered!",
+                    title="✅ Update token registered!",
                     desc="You can now begin submitting records with the `/submit` command."
                 ), ephemeral=True)
 
     @options.command(
         name="view",
-        description="View the token you have registered with the bot. Other users won't see it."
+        description="View the update token you have registered with the bot. Other users won't see it."
     )
     async def view_command(self, inter: discord.Interaction):
         if token := self.bot.get_token(inter.user):
             await inter.response.send_message(embed=blue_embed(
-                title="🔑 Your token:",
+                title="🔑 Your update token:",
                 desc=f"```\n{token}\n```"
             ), ephemeral=True)
         else:
             await inter.response.send_message(embed=red_embed(
-                title="⚠️ No token registered.",
-                desc="Use `/token set` to register your self-submit token with the bot.\n\n"
-                     "If you don't know what a self-submit token is, check `/token help`."
+                title="⚠️ No update token registered.",
+                desc="Use `/token set` to register your update token with the bot.\n\n"
+                     "If you don't know what an update token is, check `/token help`."
             ), ephemeral=True)
 
     @options.command(
         name="delete",
-        description="Remove your token from the bot's registry."
+        description="Remove your update token from the bot's registry."
     )
     async def delete_command(self, inter: discord.Interaction):
         if self.bot.get_token(inter.user):
             view = ConfirmDelete()
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
-                desc="Deleting your token will prevent you from submitting records via the bot until you set "
+                desc="Deleting your update token will prevent you from submitting records via the bot until you set "
                      "another token. Press **`Delete`** to continue."
             ), view=view, ephemeral=True)
             await view.wait()
@@ -151,9 +151,9 @@ class TokenCog(commands.Cog):
                 await inter.edit_original_response(embed=blue_embed(title="🔑 Token was not deleted."), view=None)
         else:
             await inter.response.send_message(embed=red_embed(
-                title="⚠️ No token registered.",
-                desc="Use `/token set` to register your self-submit token with the bot.\n\n"
-                     "If you don't know what a self-submit token is, check `/token help`."
+                title="⚠️ No update token registered.",
+                desc="Use `/token set` to register your update token with the bot.\n\n"
+                     "If you don't know what an update token is, check `/token help`."
             ), ephemeral=True)
 
 
