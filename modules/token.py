@@ -3,7 +3,7 @@ import re
 import uuid
 from discord.ext import commands
 
-from modules.bot import Bot, Confirm
+from modules.core import Bot, Confirm
 from modules.embeds import red_embed, green_embed, blue_embed
 
 

@@ -1,7 +1,7 @@
 import requests
 from discord.ext import commands
 
-from modules.bot import Bot
+from modules.core import Bot
 
 
 class AdminCog(commands.Cog):

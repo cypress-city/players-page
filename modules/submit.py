@@ -5,8 +5,7 @@ import re
 import requests
 import bs4
 
-from modules.bot import Bot
-from modules.core import ordinal, rank_emoji, prettify_seconds
+from modules.core import Bot, ordinal, rank_emoji, prettify_seconds
 from modules.embeds import green_embed, red_embed, could_not_connect
 from modules.courses import courses, course_autocomplete
 from modules.player import get_player

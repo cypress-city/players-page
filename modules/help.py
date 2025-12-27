@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from modules.bot import Bot
+from modules.core import Bot
 from modules.embeds import blue_embed
 
 
