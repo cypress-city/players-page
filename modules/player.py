@@ -4,7 +4,8 @@ from discord.ext import commands
 import requests
 import time
 
-from modules.courses import courses, course_autocomplete, rank_emoji, ordinal
+from modules.core import Record, rank_emoji, ordinal, prettify_time
+from modules.courses import courses, course_autocomplete
 from modules.embeds import blue_embed, could_not_connect
 
 
@@ -49,20 +50,12 @@ country_codes = {
 }
 
 
-def pretty_time(course_time: float, include_hour: bool = False):
-    if not course_time:
-        return "-:--.---"
-    return (f"{int(course_time // 3600)}:" if include_hour else "") + \
-           f"{str(int((course_time % 3600) // 60)).rjust(2, '0') if include_hour else int(course_time // 60)}:" \
-           f"{str(int(course_time % 60)).rjust(2, '0')}." \
-           f"{str(round((course_time % 1) * 1000)).rjust(3, '0')}"
-
-
 class Player:
     def __init__(self, name: str, id_no: int, country: str):
         self.name = name
         self.id = id_no
         self.country = country
+        self._profile_html = ""
 
     @staticmethod
     def from_html_table(tr: bs4.BeautifulSoup):
@@ -84,34 +77,38 @@ class Player:
         term = user_input.lower()
         return 2 if self.name.lower().startswith(term) else 1 if term in self.name.lower() else 0
 
-    def timesheet(self) -> dict[int, (float, int)]:
-        """Returns the player's timesheet as a dict with the course ID as the key and (time, rank) as the value."""
-        response = requests.get(self.profile)
-        if response.status_code != 200:
-            raise discord.HTTPException
-        soup = bs4.BeautifulSoup(response.text, "html.parser")
+    def _load_profile(self, force_reload: bool = False):
+        if force_reload or not self._profile_html:
+            response = requests.get(self.profile)
+            if response.status_code == 200:
+                self._profile_html = response.text
+            else:
+                raise discord.HTTPException
+
+    @property
+    def profile_html(self):
+        self._load_profile(force_reload=False)
+        return self._profile_html
+
+    def timesheet(self, force_reload: bool = False, include_blanks: bool = True) -> dict[int, Record]:
+        """Returns the player's timesheet as a dict with the course ID as the key and a Record object as the value."""
+        self._load_profile(force_reload=force_reload)
+        soup = bs4.BeautifulSoup(self.profile_html, "html.parser")
         timetable = soup.find("div", id="main-content").find("table", attrs={"class": "n"})
         ret = {}
         if timetable:
             for row in timetable.find_all("tr"):
-                if row.find("td", attrs={"data-tt-position": True}):
-                    cells = row.find_all("td", attrs={"data-sv": True})
-                    course_id = int(cells[0]["data-sv"])
-                    course_time = float(cells[1]["data-sv"])
-                    course_rank = int(cells[1]["data-tt-position"])
-                    ret[course_id] = course_time, course_rank
+                if row.find("td", attrs={"data-sv": True}):
+                    course_id = int(row.find("td")["data-sv"])
+                    if (record := Record.from_html_row(row)) or include_blanks:
+                        ret[course_id] = record
         return ret
-
-    def timesheet_with_blanks(self) -> dict[int, (float, int)]:
-        """Includes unsubmitted times as (0.0, 0)."""
-        timesheet = self.timesheet()
-        return {g: timesheet.get(g, (0.0, 0)) for g in courses}
 
     def profile_embed(self, title_suffix: str = "", **kwargs):
         return blue_embed(title=f"Player: {self.name} {self.flag}{title_suffix}", url=self.profile, **kwargs)
 
     def timesheet_embed(self) -> discord.Embed:
-        timesheet = self.timesheet()
+        timesheet = {k: v for k, v in self.timesheet(force_reload=True).items() if v}
         times = ""
         current_cup = ""
         for k, v in timesheet.items():
@@ -119,18 +116,18 @@ class Player:
             if course.cup != current_cup:
                 current_cup = course.cup
                 times += "\n"
-            times += f"**{course.game_and_name}** - `{pretty_time(v[0])}` - \\#{v[1]}{rank_emoji(v[1])}\n"
+            times += f"**{course.game_and_name}** - `{prettify_time(v.time)}` - \\#{v.rank}{rank_emoji(v.rank)}\n"
         return self.profile_embed(
             desc=times.strip("\n") if times else "Player has no times submitted.",
-            footer=(f"Total - {pretty_time(sum(g[0] for g in timesheet.values()), include_hour=True)} | "
-                    f"AF - {round(sum(g[1] for g in timesheet.values()) / len(timesheet), 4)}"
+            footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "
+                    f"AF - {round(sum(g.rank for g in timesheet.values()) / len(timesheet), 4)}"
                     if len(timesheet) == len(courses) else f"Courses - {len(timesheet)}/{len(courses)}"
                     if timesheet else None)
         )
 
     def compare_embed(self, opponent) -> discord.Embed:
-        my_timesheet = self.timesheet_with_blanks()
-        their_timesheet = opponent.timesheet_with_blanks()
+        my_timesheet = self.timesheet(force_reload=True)
+        their_timesheet = opponent.timesheet(force_reload=True)
         scores = [0, 0, 0]
         ret = ""
         current_cup = ""
@@ -140,10 +137,10 @@ class Player:
                 current_cup = course.cup
                 ret += "\n"
 
-            better_time = min(my_timesheet[course.id][0], their_timesheet[course.id][0])
+            better_time = min(my_timesheet[course.id].time, their_timesheet[course.id].time)
             if better_time:
-                if my_timesheet[course.id][0] == better_time:
-                    if their_timesheet[course.id][0] == better_time:
+                if my_timesheet[course.id].time == better_time:
+                    if their_timesheet[course.id].time == better_time:
                         scores[2] += 1
                     else:
                         scores[0] += 1
@@ -151,12 +148,12 @@ class Player:
                     scores[1] += 1
 
             ret += f"**{course.game_and_name}:** " \
-                   f"{'🔹 **' if my_timesheet[course.id][0] == better_time > 0 else ''}" \
-                   f"`{pretty_time(my_timesheet[course.id][0])}`" \
-                   f"{'**' if my_timesheet[course.id][0] == better_time > 0 else ''} - " \
-                   f"{'**' if their_timesheet[course.id][0] == better_time > 0 else ''}" \
-                   f"`{pretty_time(their_timesheet[course.id][0])}`" \
-                   f"{'** 🔸' if their_timesheet[course.id][0] == better_time > 0 else ''}\n"
+                   f"{'🔹 **' if my_timesheet[course.id].time == better_time > 0 else ''}" \
+                   f"`{prettify_time(my_timesheet[course.id].time)}`" \
+                   f"{'**' if my_timesheet[course.id].time == better_time > 0 else ''} - " \
+                   f"{'**' if their_timesheet[course.id].time == better_time > 0 else ''}" \
+                   f"`{prettify_time(their_timesheet[course.id].time)}`" \
+                   f"{'** 🔸' if their_timesheet[course.id].time == better_time > 0 else ''}\n"
 
         return blue_embed(
             title=f"🔹 {self.name} {self.flag} vs. 🔸 {opponent.name} {opponent.flag}",
@@ -204,7 +201,7 @@ class PlayerCog(commands.Cog):
 
     @discord.app_commands.command(
         name="player",
-        description="View a player's timesheet."
+        description="View a player's timesheet, or check their record on a specific course."
     )
     @discord.app_commands.autocomplete(player=player_autocomplete, course=course_autocomplete)
     @discord.app_commands.describe(player="Player name", course="Track name")
@@ -224,8 +221,8 @@ class PlayerCog(commands.Cog):
                 course = courses[course]
                 return await inter.response.send_message(embed=player.profile_embed(
                     title_suffix=f" > {course.abbrev}",
-                    desc=f"**{course.game_and_name}** - `{pretty_time(timesheet[course.id][0])}` - "
-                         f"\\#{timesheet[course.id][1]}{rank_emoji(timesheet[course.id][1])}"
+                    desc=f"**{course.game_and_name}** - `{prettify_time(timesheet[course.id].time)}` - "
+                         f"\\#{timesheet[course.id].rank}{rank_emoji(timesheet[course.id].rank)}"
                 ))
 
         try:
