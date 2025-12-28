@@ -51,9 +51,13 @@ class SubmitCog(commands.Cog):
     @discord.app_commands.autocomplete(course=course_autocomplete)
     @discord.app_commands.describe(
         course="Track name", time="Time formatted as 1:23.456",
-        comments="Comments (e.g. video links), max. of 127 characters"
+        comments="Comments (e.g. video links), max. of 127 characters",
+        date="Date formatted as YYYY-MM-DD (e.g. 2025-07-30 for July 30, 2025); leave blank for today's date"
     )
-    async def submit_command(self, inter: discord.Interaction, course: int, time: str, comments: str = "N/A"):
+    async def submit_command(
+            self, inter: discord.Interaction, course: int, time: str,
+            comments: str = "N/A", date: str = ""
+    ):
         if not (token := self.bot.get_token(inter.user)):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Register first!",
@@ -64,19 +68,35 @@ class SubmitCog(commands.Cog):
         if not (reg := re.fullmatch(r"(?P<min>[0-9]):(?P<sec>[0-9]{2}\.[0-9]{3})", time)):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Formatting error.",
-                desc="Times should be in the format: `1:23.456`"
+                desc="Times must be in the format: `1:23.456`"
             ), ephemeral=True)
 
         if len(comments) > 127:
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Comments must be 127 characters or shorter.",
                 desc=f"Your comment was {len(comments)} characters long."
-            ))
+            ), ephemeral=True)
         elif not comments:
             comments = "N/A"
 
+        if date:
+            try:
+                date_input = datetime.datetime.strptime(date, "%Y-%m-%d")
+                today = datetime.datetime.now(tz=datetime.timezone.utc)
+                if (date_input.date() - today.date()).days > 1:
+                    return await inter.response.send_message(embed=red_embed(
+                        title="⚠️ Formatting error.",
+                        desc="Date cannot be in the future."
+                    ), ephemeral=True)
+            except ValueError:
+                return await inter.response.send_message(embed=red_embed(
+                    title="⚠️ Formatting error.",
+                    desc="Dates must be in the format: `YYYY-MM-DD` (e.g. `2025-07-30` for July 30, 2025)"
+                ), ephemeral=True)
+        else:
+            date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
+
         time_as_float = int(reg.group("min")) * 60 + float(reg.group("sec"))
-        date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
         course = courses[course]
 
         try:
