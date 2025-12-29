@@ -1,9 +1,21 @@
 import discord
 
 
-class Confirm(discord.ui.View):
-    def __init__(self):
+class SingleUserView(discord.ui.View):
+    def __init__(self, user: discord.User):
         super().__init__(timeout=60)
+        self.user = user
+
+    async def interaction_check(self, inter: discord.Interaction, /) -> bool:
+        if inter.user == self.user:
+            return True
+        await inter.response.send_message("You can't control someone else's menu.", ephemeral=True)
+        return False
+
+
+class Confirm(SingleUserView):
+    def __init__(self, user: discord.User):
+        super().__init__(user)
         self.value = None
 
     @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
@@ -19,9 +31,9 @@ class Confirm(discord.ui.View):
         self.stop()
 
 
-class ConfirmDelete(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
+class ConfirmDelete(SingleUserView):
+    def __init__(self, user: discord.User):
+        super().__init__(user)
         self.value = None
 
     @discord.ui.button(label='Delete', style=discord.ButtonStyle.red)
@@ -37,9 +49,9 @@ class ConfirmDelete(discord.ui.View):
         self.stop()
 
 
-class PageNavigator(discord.ui.View):
-    def __init__(self, max_pages: int, starting_page: int = 1):
-        super().__init__(timeout=60)
+class PageNavigator(SingleUserView):
+    def __init__(self, user: discord.User, max_pages: int, starting_page: int = 1):
+        super().__init__(user)
         self.max_pages = max_pages
         self.page = starting_page
 

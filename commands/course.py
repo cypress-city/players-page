@@ -36,10 +36,10 @@ class CourseCog(commands.Cog):
         else:
             starting_page = 1
 
-        view = PageNavigator(course.leaderboard_pages, starting_page=starting_page)
+        view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=starting_page)
         await inter.response.send_message(embed=course.leaderboard_embed(view.page, player), view=view)
         while not await view.wait():
-            view = PageNavigator(course.leaderboard_pages, starting_page=view.page)
+            view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=view.page)
             await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player), view=view)
         await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player), view=None)
 

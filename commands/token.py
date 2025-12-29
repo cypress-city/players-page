@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from modules.core import Bot
 from modules.embeds import red_embed, green_embed, blue_embed
-from modules.views import Confirm
+from modules.views import Confirm, ConfirmDelete
 
 
 class TokenCog(commands.Cog):
@@ -55,7 +55,7 @@ class TokenCog(commands.Cog):
                     title="🔑 This is already your current token.",
                     desc="No change was made."
                 ), ephemeral=True)
-            view = Confirm()
+            view = Confirm(inter.user)
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
                 desc=f"You already have the following update token registered with the bot:\n```{current_token}```\n"
@@ -120,7 +120,7 @@ class TokenCog(commands.Cog):
     )
     async def delete_command(self, inter: discord.Interaction):
         if self.bot.get_token(inter.user):
-            view = ConfirmDelete()
+            view = ConfirmDelete(inter.user)
             await inter.response.send_message(embed=blue_embed(
                 title="⚠️ Are you sure?",
                 desc="Deleting your update token will prevent you from submitting records via the bot until you set "
