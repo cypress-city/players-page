@@ -7,6 +7,57 @@ import bs4
 import re
 
 
+_COGS = [
+    "commands.admin",
+    "commands.course",
+    "commands.help",
+    "commands.player",
+    "commands.submit",
+    "commands.token"
+]
+
+
+country_codes = {
+    'USA': 'us', 'UK': 'gb', 'Germany': 'de', 'France': 'fr', 'Canada': 'ca', 'Australia': 'au', 'Netherlands': 'nl',
+    'Japan': 'jp', 'Spain': 'es', 'Italy': 'it', 'Afghanistan': 'af', 'Albania': 'al', 'Algeria': 'dz',
+    'American Samoa': 'as', 'Andorra': 'ad', 'Angola': 'ao', 'Anguilla': 'ai', 'Antarctica': 'aq',
+    'Antigua and Barbuda': 'ag', 'Argentina': 'ar', 'Armenia': 'am', 'Aruba': 'aw', 'Austria': 'at',
+    'Azerbaijan': 'az', 'Bahamas': 'bs', 'Bahrain': 'bh', 'Bangladesh': 'bd', 'Barbados': 'bb', 'Belarus': 'by',
+    'Belgium': 'be', 'Belize': 'bz', 'Benin': 'bj', 'Bermuda': 'bm', 'Bhutan': 'bt', 'Bolivia': 'bo',
+    'Bosnia and Herzegovina': 'ba', 'Botswana': 'bw', 'Brazil': 'br', 'Brunei': 'bn', 'Bulgaria': 'bg',
+    'Burkina Faso': 'bf', 'Burundi': 'bi', 'Cambodia': 'kh', 'Cameroon': 'cm', 'Cape Verde': 'cv',
+    'Cayman Islands': 'ky', 'Central African Republic': 'cf', 'Chad': 'td', 'Chile': 'cl', 'China': 'cn',
+    'Colombia': 'co', 'Comoros': 'km', 'Congo': 'cg', 'Congo, The DRC': 'cd', 'Cook Islands': 'ck', 'Costa Rica': 'cr',
+    "Côte d'Ivoire": 'ci', 'Croatia': 'hr', 'Cuba': 'cu', 'Curacao': 'cw', 'Cyprus': 'cy', 'Czech Republic': 'cz',
+    'Denmark': 'dk', 'Djibouti': 'dj', 'Dominica': 'dm', 'Dominican Republic': 'do', 'Ecuador': 'ec', 'Egypt': 'eg',
+    'El Salvador': 'sv', 'Equatorial Guinea': 'gq', 'Eritrea': 'er', 'Estonia': 'ee', 'Eswatini': 'sz',
+    'Ethiopia': 'et', 'Falkland Islands': 'fk', 'Faroe Islands': 'fo', 'Fiji': 'fj', 'Finland': 'fi',
+    'French Guiana': 'gf', 'French Polynesia': 'pf', 'Gabon': 'ga', 'Gambia': 'gm', 'Georgia': 'ge', 'Ghana': 'gh',
+    'Gibraltar': 'gi', 'Greece': 'gr', 'Greenland': 'gl', 'Grenada': 'gd', 'Guadeloupe': 'gp', 'Guam': 'gu',
+    'Guatemala': 'gt', 'Guinea': 'gn', 'Guinea-Bissau': 'gw', 'Guyana': 'gy', 'Haiti': 'ht', 'Honduras': 'hn',
+    'Hong Kong': 'hk', 'Hungary': 'hu', 'Iceland': 'is', 'India': 'in', 'Indonesia': 'id', 'Iran': 'ir', 'Iraq': 'iq',
+    'Ireland': 'ie', 'Israel': 'il', 'Jamaica': 'jm', 'Jordan': 'jo', 'Kazakhstan': 'kz', 'Kenya': 'ke',
+    'Kiribati': 'ki', 'Korea, D.P.R.': 'kp', 'Kuwait': 'kw', 'Kyrgyzstan': 'kg', 'Laos': 'la', 'Latvia': 'lv',
+    'Lebanon': 'lb', 'Lesotho': 'ls', 'Liberia': 'lr', 'Libya': 'ly', 'Liechtenstein': 'li', 'Lithuania': 'lt',
+    'Luxembourg': 'lu', 'Macau': 'mo', 'Madagascar': 'mg', 'Malawi': 'mw', 'Malaysia': 'my', 'Maldives': 'mv',
+    'Mali': 'ml', 'Malta': 'mt', 'Mauritania': 'mr', 'Mauritius': 'mu', 'Mayotte': 'yt', 'Mexico': 'mx',
+    'Micronesia': 'fm', 'Moldova': 'md', 'Monaco': 'mc', 'Mongolia': 'mn', 'Montenegro': 'me', 'Montserrat': 'ms',
+    'Morocco': 'ma', 'Mozambique': 'mz', 'Myanmar': 'mm', 'Namibia': 'na', 'Nepal': 'np', 'New Caledonia': 'nc',
+    'New Zealand': 'nz', 'Nicaragua': 'ni', 'Niger': 'ne', 'Nigeria': 'ng', 'Niue': 'nu', 'North Macedonia': 'mk',
+    'Norway': 'no', 'Oman': 'om', 'Pakistan': 'pk', 'Palestine': 'ps', 'Panama': 'pa', 'Papua New Guinea': 'pg',
+    'Paraguay': 'py', 'Peru': 'pe', 'Philippines': 'ph', 'Poland': 'pl', 'Portugal': 'pt', 'Qatar': 'qa',
+    'Romania': 'ro', 'Russia': 'ru', 'Rwanda': 'rw', 'Samoa': 'ws', 'Sao Tome and Principe': 'st',
+    'Saudi Arabia': 'sa', 'Senegal': 'sn', 'Serbia': 'rs', 'Seychelles': 'sc', 'Sierra Leone': 'sl', 'Singapore': 'sg',
+    'Slovakia': 'sk', 'Slovenia': 'si', 'Solomon Islands': 'sb', 'Somalia': 'so', 'South Africa': 'za',
+    'South Korea': 'kr', 'South Sudan': 'ss', 'Sri Lanka': 'lk', 'Sudan': 'sd', 'Suriname': 'sr', 'Sweden': 'se',
+    'Switzerland': 'ch', 'Syria': 'sy', 'Taiwan': 'tw', 'Tajikistan': 'tj', 'Tanzania': 'tz', 'Thailand': 'th',
+    'Timor-Leste': 'tl', 'Togo': 'tg', 'Tokelau': 'tk', 'Tonga': 'to', 'Trinidad and Tobago': 'tt', 'Tunisia': 'tn',
+    'Turkey': 'tr', 'Turkmenistan': 'tm', 'Uganda': 'ug', 'Ukraine': 'ua', 'United Arab Emirates': 'ae',
+    'Uruguay': 'uy', 'Uzbekistan': 'uz', 'Vanuatu': 'vu', 'Venezuela': 've', 'Viet Nam': 'vn', 'Western Sahara': 'eh',
+    'Yemen': 'ye', 'Zambia': 'zm', 'Zimbabwe': 'zw'
+}
+
+
 def rank_emoji(rank: int) -> str:
     return " 🏆" if rank == 1 else " 🥈" if rank == 2 else " 🥉" if rank == 3 else " 🔹" if rank <= 10 else ""
 
@@ -72,22 +123,23 @@ class Record:
         )
 
 
-class Confirm(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
-        self.value = None
+class PlayerBase:
+    def __init__(self, name: str, id_no: int, country: str):
+        self.name = name
+        self.id = id_no
+        self.country = country
 
-    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
-    async def confirm(self, inter: discord.Interaction, button: discord.ui.Button):
-        await inter.response.defer()
-        self.value = True
-        self.stop()
+    @property
+    def profile(self):
+        return f"https://www.mariokart64.com/mkworld/player.php?pid={self.id}"
 
-    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.gray)
-    async def cancel(self, inter: discord.Interaction, button: discord.ui.Button):
-        await inter.response.defer()
-        self.value = False
-        self.stop()
+    @property
+    def flag(self):
+        return f":flag_{country_codes[self.country]}:"
+
+    def closeness(self, user_input: str):
+        term = user_input.lower()
+        return 2 if self.name.lower().startswith(term) else 1 if term in self.name.lower() else 0
 
 
 class Bot(commands.Bot):  # main bot class
@@ -126,5 +178,5 @@ class Bot(commands.Bot):  # main bot class
         self.save_tokens()
 
     async def setup_hook(self) -> None:
-        for extension in ["modules.token", "modules.submit", "modules.admin", "modules.help", "modules.player"]:
+        for extension in _COGS:
             await self.load_extension(extension)

@@ -1,4 +1,17 @@
 import discord
+import bs4
+import requests
+import time
+
+from modules.core import prettify_time, unprettify_time, PlayerBase
+from modules.embeds import blue_embed
+
+
+class CourseRecord:
+    def __init__(self, player: PlayerBase, time: float, rank: int):
+        self.player = player
+        self.time = time
+        self.rank = rank
 
 
 class Course:
@@ -8,6 +21,9 @@ class Course:
         self.id = id_no
         self.cup = cup
         self.source_game = source_game
+        self.leaderboard: list[CourseRecord] = []
+        self.total_submissions = 0
+        self._board_last_loaded = 0
 
     @property
     def game_and_name(self):
@@ -20,6 +36,64 @@ class Course:
     @property
     def url(self):
         return f"https://www.mariokart64.com/mkworld/course.php?system=Normal&cid={self.id}"
+
+    def load_leaderboard(self):
+        if (time.time() - self._board_last_loaded > 30) or not self.leaderboard:
+            self.leaderboard.clear()
+            current_page = 1
+            while current_page <= max((self.total_submissions - 1) // 100 + 1, 1):
+                response = requests.get(self.url + f"&page={current_page}")
+                if response.status_code != 200:
+                    raise discord.HTTPException
+                soup = bs4.BeautifulSoup(response.text, "html.parser")
+
+                self.total_submissions = int(
+                    soup.find("div", attrs={"class": "page-info"}).text.split(" of ")[1]
+                )
+
+                table = soup.find("div", id="main-content").find("table", attrs={"class": "n"})
+                for row in table.find_all("tr", attrs={"class": True}):
+                    cells = row.find_all("td")
+                    self.leaderboard.append(CourseRecord(
+                        player=PlayerBase(
+                            name=cells[1].text,
+                            id_no=int(cells[2].find("a")["href"].split("=")[1]),
+                            country=cells[3].text
+                        ),
+                        time=unprettify_time(cells[4].text),
+                        rank=int(cells[0].text)
+                    ))
+
+                current_page += 1
+
+            self.leaderboard.sort(key=lambda c: c.rank)
+
+    @property
+    def leaderboard_pages(self):
+        return int((self.total_submissions - 1) // 10 + 1)
+
+    def leaderboard_embed(self, page: int = 1, highlight_player_id: int = None):
+        return blue_embed(
+            title=self.full_display,
+            desc="\n".join(
+                f"{g.rank}. {'**' if g.player.id == highlight_player_id else ''}"
+                f"`{prettify_time(g.time)}` - {g.player.name} {g.player.flag}"
+                f"{'**' if g.player.id == highlight_player_id else ''}"
+                for g in self.leaderboard[(page - 1) * 10:page * 10]
+            ),
+            footer=f"Total records: {self.total_submissions} | Page: {page}/{self.leaderboard_pages}"
+        )
+
+    async def player_search(self, inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
+        players = [g.player for g in self.leaderboard]
+        matches = sorted([g for g in players if g.closeness(current)], key=lambda c: -c.closeness(current))
+        return [discord.app_commands.Choice(name=g.name, value=g.id) for g in matches][:25]
+
+    def get_record_for(self, player_id: int) -> CourseRecord | None:
+        try:
+            return [g for g in self.leaderboard if g.player.id == player_id][0]
+        except IndexError:
+            return None
 
     def closeness(self, user_input: str):
         term = user_input.lower()

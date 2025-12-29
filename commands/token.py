@@ -3,26 +3,9 @@ import re
 import uuid
 from discord.ext import commands
 
-from modules.core import Bot, Confirm
+from modules.core import Bot
 from modules.embeds import red_embed, green_embed, blue_embed
-
-
-class ConfirmDelete(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
-        self.value = None
-
-    @discord.ui.button(label='Delete', style=discord.ButtonStyle.red)
-    async def confirm(self, inter: discord.Interaction, button: discord.ui.Button):
-        await inter.response.defer()
-        self.value = True
-        self.stop()
-
-    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.gray)
-    async def cancel(self, inter: discord.Interaction, button: discord.ui.Button):
-        await inter.response.defer()
-        self.value = False
-        self.stop()
+from modules.views import Confirm
 
 
 class TokenCog(commands.Cog):
