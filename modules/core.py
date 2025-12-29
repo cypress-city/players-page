@@ -95,6 +95,10 @@ def unprettify_time(text: str) -> float:
     )
 
 
+def closeness(search_term: str, match: str) -> int:
+    return 2 if match.startswith(search_term) else 1 if search_term in match else 0
+
+
 class Record:
     def __init__(self, **kwargs):
         self.time: float = kwargs.get("time", 0.0)
@@ -138,8 +142,7 @@ class PlayerBase:
         return f":flag_{country_codes[self.country]}:"
 
     def closeness(self, user_input: str):
-        term = user_input.lower()
-        return 2 if self.name.lower().startswith(term) else 1 if term in self.name.lower() else 0
+        return closeness(user_input.lower(), self.name.lower())
 
 
 class Bot(commands.Bot):  # main bot class

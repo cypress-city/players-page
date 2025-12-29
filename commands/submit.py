@@ -113,7 +113,7 @@ class SubmitCog(commands.Cog):
                         player = get_player(name=re.search(r"(?<=<i>).+(?=,n,)", response.text)[0], force_load=True)
                     else:
                         player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]), force_load=True)
-                except TypeError:  # if the response text looks nonstandard
+                except TypeError | requests.exceptions.ConnectTimeout:
                     player = None
                 if not player:
                     return await inter.response.send_message(embed=green_embed(

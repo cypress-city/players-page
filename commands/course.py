@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 from modules.core import Bot
-from modules.courses import courses, course_autocomplete
+from modules.courses import courses, course_autocomplete, region_autocomplete
 from modules.embeds import could_not_connect, blue_embed
 from modules.players import player_autocomplete, players
 from modules.views import PageNavigator
@@ -16,12 +16,14 @@ class CourseCog(commands.Cog):
         name="course",
         description="View the leaderboard for a course."
     )
-    @discord.app_commands.autocomplete(course=course_autocomplete, player=player_autocomplete)
-    @discord.app_commands.describe(course="Track name", player="Player name")
-    async def course_command(self, inter: discord.Interaction, course: int, player: int = None):
+    @discord.app_commands.autocomplete(
+        course=course_autocomplete, player=player_autocomplete, region=region_autocomplete
+    )
+    @discord.app_commands.describe(course="Track name", player="Player name", region="Country or region name")
+    async def course_command(self, inter: discord.Interaction, course: int, player: int = None, region: str = None):
         course = courses[course]
         try:
-            course.load_leaderboard()
+            course.load_leaderboard(region_filter=region)
         except discord.HTTPException:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
@@ -36,12 +38,18 @@ class CourseCog(commands.Cog):
         else:
             starting_page = 1
 
+        if not course.leaderboard:
+            return await inter.response.send_message(embed=blue_embed(
+                title=course.full_display + (f" > {region}" if region else ""),
+                desc="No records found."
+            ))
+
         view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=starting_page)
-        await inter.response.send_message(embed=course.leaderboard_embed(view.page, player), view=view)
+        await inter.response.send_message(embed=course.leaderboard_embed(view.page, player, region), view=view)
         while not await view.wait():
             view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=view.page)
-            await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player), view=view)
-        await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player), view=None)
+            await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=view)
+        await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=None)
 
 
 async def setup(bot: Bot):

@@ -3,7 +3,7 @@ import bs4
 import requests
 import time
 
-from modules.core import prettify_time, unprettify_time, PlayerBase
+from modules.core import prettify_time, unprettify_time, PlayerBase, country_codes, closeness
 from modules.embeds import blue_embed
 
 
@@ -37,12 +37,13 @@ class Course:
     def url(self):
         return f"https://www.mariokart64.com/mkworld/course.php?system=Normal&cid={self.id}"
 
-    def load_leaderboard(self):
+    def load_leaderboard(self, region_filter: str = None):
         if (time.time() - self._board_last_loaded > 30) or not self.leaderboard:
             self.leaderboard.clear()
+            region = f"&country={'+'.join(region_filter.split())}" if region_filter else ""
             current_page = 1
             while current_page <= max((self.total_submissions - 1) // 100 + 1, 1):
-                response = requests.get(self.url + f"&page={current_page}")
+                response = requests.get(self.url + f"&page={current_page}{region}")
                 if response.status_code != 200:
                     raise discord.HTTPException
                 soup = bs4.BeautifulSoup(response.text, "html.parser")
@@ -72,16 +73,17 @@ class Course:
     def leaderboard_pages(self):
         return int((self.total_submissions - 1) // 10 + 1)
 
-    def leaderboard_embed(self, page: int = 1, highlight_player_id: int = None):
+    def leaderboard_embed(self, page: int = 1, highlight_player_id: int = None, region: str = None):
         return blue_embed(
-            title=self.full_display,
+            title=self.full_display + (f" > {region}" if region else ""),
             desc="\n".join(
                 f"{g.rank}. {'**' if g.player.id == highlight_player_id else ''}"
                 f"`{prettify_time(g.time)}` - {g.player.name} {g.player.flag}"
                 f"{'**' if g.player.id == highlight_player_id else ''}"
                 for g in self.leaderboard[(page - 1) * 10:page * 10]
             ),
-            footer=f"Total records: {self.total_submissions} | Page: {page}/{self.leaderboard_pages}"
+            footer=f"Total records: {self.total_submissions} | Page: {page}/{self.leaderboard_pages}",
+            url=self.url
         )
 
     async def player_search(self, inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
@@ -138,3 +140,15 @@ courses: dict[int, Course] = {
 async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
     matches = sorted([g for g in courses.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
     return [discord.app_commands.Choice(name=g.full_display, value=g.id) for g in matches][:25]
+
+
+regions = ["North America", "South America", "Europe", "Africa", "Asia", "Oceania"] + list(country_codes)
+
+
+def region_closeness(search_term: str, match: str) -> int:
+    return 3 if search_term.lower() == country_codes.get(match) else closeness(search_term.lower(), match.lower())
+
+
+async def region_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
+    matches = sorted([g for g in regions if region_closeness(current, g)], key=lambda c: -region_closeness(current, c))
+    return [discord.app_commands.Choice(name=g, value=g) for g in matches][:25]
