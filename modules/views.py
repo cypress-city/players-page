@@ -55,6 +55,9 @@ class PageNavigator(SingleUserView):
         self.max_pages = max_pages
         self.page = starting_page
 
+    def copy(self):
+        return PageNavigator(self.user, self.max_pages, self.page)
+
     @discord.ui.button(label='<<', style=discord.ButtonStyle.blurple)
     async def to_top(self, inter: discord.Interaction, button: discord.ui.Button):
         await inter.response.defer()

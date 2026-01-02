@@ -47,7 +47,7 @@ class CourseCog(commands.Cog):
         view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=starting_page)
         await inter.response.send_message(embed=course.leaderboard_embed(view.page, player, region), view=view)
         while not await view.wait():
-            view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=view.page)
+            view = view.copy()
             await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=view)
         await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=None)
 

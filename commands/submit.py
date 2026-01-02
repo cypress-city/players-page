@@ -62,7 +62,7 @@ class SubmitCog(commands.Cog):
             return await inter.response.send_message(embed=red_embed(
                 title="⚠️ Register first!",
                 desc="Before you can submit records, you need to share your update token with the bot using "
-                     "the `/token set` command. Check `/token help` for more information."
+                     "the `/register` command. Check `/help Registering` for more information."
             ), ephemeral=True)
 
         if not (reg := re.fullmatch(r"(?P<min>[0-9]):(?P<sec>[0-9]{2}\.[0-9]{3})", time)):
