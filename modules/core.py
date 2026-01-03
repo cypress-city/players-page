@@ -6,6 +6,8 @@ import os
 import bs4
 import re
 
+from modules.embeds import blue_embed
+
 
 _COGS = [
     "commands.admin",
@@ -143,6 +145,52 @@ class PlayerBase:
 
     def closeness(self, user_input: str):
         return closeness(user_input.lower(), self.name.lower())
+
+
+class LeaderboardEntry:
+    def __init__(self, player: PlayerBase, time: float, rank: int):
+        self.player = player
+        self.time = time
+        self.rank = rank
+
+
+class Leaderboard:
+    def __init__(self, name: str, url: str, entries: list[LeaderboardEntry], region: str = None):
+        self.name = name
+        self.url = url
+        self.region = region
+        self.entries = entries
+
+    def __getitem__(self, item: int):
+        return self.entries[item]
+
+    @property
+    def pages(self):
+        return int((len(self.entries) - 1) // 10 + 1)
+
+    async def player_search(self, inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
+        players = [g.player for g in self.entries]
+        matches = sorted([g for g in players if g.closeness(current)], key=lambda c: -c.closeness(current))
+        return [discord.app_commands.Choice(name=g.name, value=g.id) for g in matches][:25]
+
+    def get_record_for(self, player_id: int) -> LeaderboardEntry | None:
+        try:
+            return [g for g in self.entries if g.player.id == player_id][0]
+        except IndexError:
+            return None
+
+    def embed(self, page: int = 1, highlight_player_id: int = None):
+        return blue_embed(
+            title=self.name + (f" > {self.region}" if self.region else ""),
+            desc="\n".join(
+                f"{g.rank}. {'**' if g.player.id == highlight_player_id else ''}"
+                f"`{prettify_time(g.time)}` - {g.player.name} {g.player.flag}"
+                f"{'**' if g.player.id == highlight_player_id else ''}"
+                for g in self.entries[(page - 1) * 10:page * 10]
+            ),
+            footer=f"Total records: {len(self.entries)} | Page: {page}/{self.pages}",
+            url=self.url
+        )
 
 
 class Bot(commands.Bot):  # main bot class

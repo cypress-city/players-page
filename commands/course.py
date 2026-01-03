@@ -23,13 +23,13 @@ class CourseCog(commands.Cog):
     async def course_command(self, inter: discord.Interaction, course: int, player: int = None, region: str = None):
         course = courses[course]
         try:
-            course.load_leaderboard(region_filter=region)
+            leaderboard = course.get_leaderboard(region_filter=region)
         except discord.HTTPException:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         if player is not None:
-            if course.get_record_for(player):
-                starting_page = (course.get_record_for(player).rank - 1) // 10 + 1
+            if leaderboard.get_record_for(player):
+                starting_page = (leaderboard.get_record_for(player).rank - 1) // 10 + 1
             else:
                 return await inter.response.send_message(embed=blue_embed(
                     title=course.full_display,
@@ -38,18 +38,18 @@ class CourseCog(commands.Cog):
         else:
             starting_page = 1
 
-        if not course.leaderboard:
+        if not leaderboard.entries:
             return await inter.response.send_message(embed=blue_embed(
                 title=course.full_display + (f" > {region}" if region else ""),
                 desc="No records found."
             ))
 
-        view = PageNavigator(inter.user, course.leaderboard_pages, starting_page=starting_page)
-        await inter.response.send_message(embed=course.leaderboard_embed(view.page, player, region), view=view)
+        view = PageNavigator(inter.user, leaderboard.pages, starting_page=starting_page)
+        await inter.response.send_message(embed=leaderboard.embed(view.page, player), view=view)
         while not await view.wait():
             view = view.copy()
-            await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=view)
-        await inter.edit_original_response(embed=course.leaderboard_embed(view.page, player, region), view=None)
+            await inter.edit_original_response(embed=leaderboard.embed(view.page, player), view=view)
+        await inter.edit_original_response(embed=leaderboard.embed(view.page, player), view=None)
 
 
 async def setup(bot: Bot):
