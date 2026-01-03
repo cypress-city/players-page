@@ -60,7 +60,7 @@ class Player(PlayerBase):
             if course.cup != current_cup:
                 current_cup = course.cup
                 times += "\n"
-            times += f"**{course.game_and_name}** - `{prettify_time(v.time)}` - \\#{v.rank}{rank_emoji(v.rank)}\n"
+            times += f"**{course.game_and_name}** - {v.time_with_link()} - \\#{v.rank}{rank_emoji(v.rank)}\n"
         return self.profile_embed(
             desc=times.strip("\n") if times else "Player has no times submitted.",
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "

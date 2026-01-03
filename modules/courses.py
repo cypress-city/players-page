@@ -44,6 +44,10 @@ class Course:
             table = soup.find("div", id="main-content").find("table", attrs={"class": "n"})
             for row in table.find_all("tr", attrs={"class": True}):
                 cells = row.find_all("td")
+                if video_cell := cells[5].find("a"):
+                    video_link = video_cell["href"]
+                else:
+                    video_link = None
                 ret.append(LeaderboardEntry(
                     player=PlayerBase(
                         name=cells[1].text,
@@ -51,7 +55,8 @@ class Course:
                         country=cells[3].text
                     ),
                     time=unprettify_time(cells[4].text),
-                    rank=int(cells[0].text)
+                    rank=int(cells[0].text),
+                    video_link=video_link
                 ))
 
             current_page += 1

@@ -106,6 +106,7 @@ class Record:
         self.time: float = kwargs.get("time", 0.0)
         self.rank: int = kwargs.get("rank", 0)
         self.previous_time: float = kwargs.get("previous_time", 0.0)
+        self.video_link = kwargs.get("video_link")
 
     def __bool__(self):
         return bool(self.time)
@@ -122,11 +123,20 @@ class Record:
             previous_time = 0
         else:
             previous_time = unprettify_time(record_info["data-tt-insert-at-old-time"])
+        if video_cell := soup.find("a", attrs={"class": "no-underline"}):
+            video_link = video_cell["href"]
+        else:
+            video_link = None
         return Record(
             time=float(record_info["data-sv"]),
             rank=int(record_info["data-tt-position"]),
-            previous_time=previous_time
+            previous_time=previous_time,
+            video_link=video_link
         )
+
+    def time_with_link(self):
+        return (f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
+                f"{(']('+self.video_link+')') if self.video_link else ''}")
 
 
 class PlayerBase:
@@ -148,10 +158,18 @@ class PlayerBase:
 
 
 class LeaderboardEntry:
-    def __init__(self, player: PlayerBase, time: float, rank: int):
+    def __init__(self, player: PlayerBase, time: float, rank: int, video_link: str = None):
         self.player = player
         self.time = time
         self.rank = rank
+        self.video_link = video_link
+
+    def display(self, highlight_player_id: int = None):
+        return (f"{self.rank}. {'**' if self.player.id == highlight_player_id else ''}"
+                f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
+                f"{(']('+self.video_link+')') if self.video_link else ''}"
+                f" - {self.player.name} {self.player.flag}"
+                f"{'**' if self.player.id == highlight_player_id else ''}")
 
 
 class Leaderboard:
@@ -182,12 +200,7 @@ class Leaderboard:
     def embed(self, page: int = 1, highlight_player_id: int = None):
         return blue_embed(
             title=self.name + (f" > {self.region}" if self.region else ""),
-            desc="\n".join(
-                f"{g.rank}. {'**' if g.player.id == highlight_player_id else ''}"
-                f"`{prettify_time(g.time)}` - {g.player.name} {g.player.flag}"
-                f"{'**' if g.player.id == highlight_player_id else ''}"
-                for g in self.entries[(page - 1) * 10:page * 10]
-            ),
+            desc="\n".join(g.display(highlight_player_id) for g in self.entries[(page - 1) * 10:page * 10]),
             footer=f"Total records: {len(self.entries)} | Page: {page}/{self.pages}",
             url=self.url
         )
