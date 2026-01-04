@@ -13,6 +13,7 @@ _COGS = [
     "commands.admin",
     "commands.course",
     "commands.help",
+    "commands.leaderboards",
     "commands.player",
     "commands.submit",
     "commands.token"
@@ -87,7 +88,7 @@ def prettify_time(time: float, include_hour: bool = False) -> str:
 
 def unprettify_time(text: str) -> float:
     if not (match := re.fullmatch(
-            r"((?P<hr>[0-9]):)?(?P<min>[0-9]{1,2})[:'.](?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,3})",
+            r"((?P<hr>[0-9]):)?(?P<min>[0-9]+)[:'.](?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,3})",
             text.strip('"')
     )):
         raise ValueError(f"Cannot interpret string as time: {text}")
@@ -164,9 +165,13 @@ class LeaderboardEntry:
         self.rank = rank
         self.video_link = video_link
 
+    @property
+    def score_display(self):
+        return prettify_time(self.time)
+
     def display(self, highlight_player_id: int = None):
         return (f"{self.rank}. {'**' if self.player.id == highlight_player_id else ''}"
-                f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
+                f"{'[' if self.video_link else ''}`{self.score_display}`"
                 f"{(']('+self.video_link+')') if self.video_link else ''}"
                 f" - {self.player.name} {self.player.flag}"
                 f"{'**' if self.player.id == highlight_player_id else ''}")
@@ -201,7 +206,7 @@ class Leaderboard:
         return blue_embed(
             title=self.name + (f" > {self.region}" if self.region else ""),
             desc="\n".join(g.display(highlight_player_id) for g in self.entries[(page - 1) * 10:page * 10]),
-            footer=f"Total records: {len(self.entries)} | Page: {page}/{self.pages}",
+            footer=f"Total: {len(self.entries)} | Page: {page}/{self.pages}",
             url=self.url
         )
 

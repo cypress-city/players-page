@@ -12,7 +12,8 @@ help_pages = {
                "* **Registering:** How to sign up for the Players' Page, and how to link your account with the bot.\n"
                "* **Submitting:** How to submit records to the Players' Page.\n"
                "* **Players:** How to view and compare players' records.\n"
-               "* **Leaderboards:** How to view course leaderboards.",
+               "* **Courses:** How to view course leaderboards.\n"
+               "* **Leaderboards:** How to view overall player rankings.",
     "Registering": "In order to submit records via the bot, you need an **update token**: a unique identifier that "
                    "acts as a \"passkey\" for your account. The token is a [32-character string of numbers and letters]"
                    "(https://en.wikipedia.org/wiki/Universally_unique_identifier) given to you after making an account "
@@ -60,10 +61,20 @@ help_pages = {
                "faster will be marked with a 🔹 blue diamond.\n"
                "* `player2`: (required) The display name of the second player to compare. Tracks where player 2 is "
                "faster will be marked with an 🔸 orange diamond.",
-    "Leaderboards": "The **``/course``** command allows you to view the global or regional leaderboards for a track. "
-                    "It has one required field and two optional fields:\n"
-                    "* `course`: (required) The name of the track. Start typing a track's name or abbreviation to "
-                    "search, then select from the list of options above the message bar.\n"
+    "Courses": "The **``/course``** command allows you to view the global or regional leaderboards for a track. "
+               "It has one required field and two optional fields:\n"
+               "* `course`: (required) The name of the track. Start typing a track's name or abbreviation to "
+               "search, then select from the list of options above the message bar.\n"
+               "* `region`: (optional) A specific country or continent. Leave this blank to view global "
+               "leaderboards.\n"
+               "* `player`: (optional) A specific player to highlight. Use if you want to quickly see the "
+               "times surrounding a certain player on the leaderboards.",
+    "Leaderboards": "There are two different player leaderboards implemented by the bot:\n"
+                    "* **`/leaderboard average`**: Average Finish (AF) is the average of a player's ranks on all 30 "
+                    "courses.\n"
+                    "* **`/leaderboard total`**: Total Time is the total of a player's times on all 30 courses.\n"
+                    "Each of these commands allows you to view global or leaderboards in that category. "
+                    "These commands have two optional fields:\n"
                     "* `region`: (optional) A specific country or continent. Leave this blank to view global "
                     "leaderboards.\n"
                     "* `player`: (optional) A specific player to highlight. Use if you want to quickly see the "
@@ -101,6 +112,12 @@ class HelpView(discord.ui.View):
     async def players(self, inter: discord.Interaction, button: discord.ui.Button):
         await inter.response.defer()
         self.page = "Players"
+        self.stop()
+
+    @discord.ui.button(label="Courses", style=discord.ButtonStyle.gray)
+    async def courses(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.page = "Courses"
         self.stop()
 
     @discord.ui.button(label="Leaderboards", style=discord.ButtonStyle.gray)
