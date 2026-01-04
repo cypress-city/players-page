@@ -112,7 +112,7 @@ players_last_updated = 0
 
 
 def refresh_player_list():
-    response = requests.get("https://www.mariokart64.com/mkworld/playerlist.php", timeout=10)
+    response = requests.get("https://www.mariokart64.com/mkworld/playerlist.php", timeout=3)
     if response.status_code == 200:
         soup = bs4.BeautifulSoup(response.text, "html.parser")
         player_table = soup.find("table", id="player-table").find("tbody")

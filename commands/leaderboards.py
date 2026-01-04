@@ -48,7 +48,7 @@ def load_leaderboard(url: str, mode: str, title: str, region_filter: str = None)
     total_submissions = 0
 
     while current_page <= max((total_submissions - 1) // 100 + 1, 1):
-        response = requests.get(url + f"&page={current_page}{region}")
+        response = requests.get(url + f"&page={current_page}{region}", timeout=3)
         if response.status_code != 200:
             raise discord.HTTPException
         soup = bs4.BeautifulSoup(response.text, "html.parser")
