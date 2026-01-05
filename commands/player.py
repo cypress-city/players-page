@@ -33,7 +33,7 @@ class PlayerCog(commands.Cog):
                 course = courses[course]
                 return await inter.response.send_message(embed=player.profile_embed(
                     title_suffix=f" > {course.abbrev}",
-                    desc=f"**{course.game_and_name}** - `{prettify_time(timesheet[course.id].time)}` - "
+                    desc=f"**{course.game_and_name}** - `{timesheet[course.id].time_with_link()}` - "
                          f"\\#{timesheet[course.id].rank}{rank_emoji(timesheet[course.id].rank)}"
                 ))
 
