@@ -3,7 +3,7 @@ import discord
 
 class SingleUserView(discord.ui.View):
     def __init__(self, user: discord.User):
-        super().__init__(timeout=60)
+        super().__init__(timeout=180)
         self.user = user
 
     async def interaction_check(self, inter: discord.Interaction, /) -> bool:
