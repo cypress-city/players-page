@@ -79,16 +79,16 @@ def prettify_seconds(seconds: float) -> str:
 
 
 def prettify_time(time: float, include_hour: bool = False) -> str:
-    if not time:
+    if not (rounded := round(time, 3)):
         return ("-:-" if include_hour else "") + "-:--.---"
-    return (f"{int(time // 3600)}:" if include_hour else "") + \
-        f"{str(int((time % 3600) // 60)).rjust(2, '0') if include_hour else int(time // 60)}:" \
-        f"{prettify_seconds(time % 60).rjust(6, '0')}"
+    return (f"{int(rounded // 3600)}:" if include_hour else "") + \
+        f"{str(int((rounded % 3600) // 60)).rjust(2, '0') if include_hour else int(rounded // 60)}:" \
+        f"{prettify_seconds(rounded % 60).rjust(6, '0')}"
 
 
 def unprettify_time(text: str) -> float:
     if not (match := re.fullmatch(
-            r"((?P<hr>[0-9]):)?(?P<min>[0-9]+)[:'.](?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,3})",
+            r"((?P<hr>[0-9]):)?(?P<min>[0-9]+)[:'.](?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,4})",
             text.strip('"')
     )):
         raise ValueError(f"Cannot interpret string as time: {text}")
