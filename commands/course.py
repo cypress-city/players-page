@@ -24,7 +24,7 @@ class CourseCog(commands.Cog):
         course = courses[course]
         try:
             leaderboard = course.get_leaderboard(region_filter=region)
-        except discord.HTTPException:
+        except ConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         if player is not None:

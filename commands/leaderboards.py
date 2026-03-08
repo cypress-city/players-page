@@ -50,7 +50,7 @@ def load_leaderboard(url: str, mode: str, title: str, region_filter: str = None)
     while current_page <= max((total_submissions - 1) // 100 + 1, 1):
         response = requests.get(url + f"&page={current_page}{region}", timeout=3)
         if response.status_code != 200:
-            raise discord.HTTPException
+            raise ConnectionError("Could not connect to Players' Page.")
         soup = bs4.BeautifulSoup(response.text, "html.parser")
 
         total_submissions = int(
@@ -113,7 +113,7 @@ class LeaderboardsCog(commands.Cog):
                 "https://www.mariokart64.com/mkworld/stat.php?type=AF",
                 mode="score", title="AF | Average Finish", region_filter=region
             )
-        except discord.HTTPException:
+        except ConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 
@@ -129,7 +129,7 @@ class LeaderboardsCog(commands.Cog):
                 "https://www.mariokart64.com/mkworld/stat.php?type=Total%20Times",
                 mode="time", title="Total Times", region_filter=region
             )
-        except discord.HTTPException:
+        except ConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 

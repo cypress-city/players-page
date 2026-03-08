@@ -34,7 +34,7 @@ class Course:
         while current_page <= max((total_submissions - 1) // 100 + 1, 1):
             response = requests.get(self.url + f"&page={current_page}{region}", timeout=3)
             if response.status_code != 200:
-                raise discord.HTTPException
+                raise ConnectionError("Could not connect to Players' Page.")
             soup = bs4.BeautifulSoup(response.text, "html.parser")
 
             total_submissions = int(

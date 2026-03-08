@@ -38,7 +38,7 @@ class SubmitCog(commands.Cog):
         example_profile = "https://www.mariokart64.com/mkworld/player.php?pid=252"
         hackney = requests.get(example_profile, timeout=10)
         if hackney.status_code != 200:
-            raise discord.HTTPException
+            raise ConnectionError
         soup = bs4.BeautifulSoup(hackney.text, "html.parser")
         timestamp_input = soup.find("input", attrs={"name": "timestamp"})
         sig_input = soup.find("input", attrs={"name": "sig"})
@@ -101,12 +101,12 @@ class SubmitCog(commands.Cog):
 
         try:
             auth_timestamp, auth_sig = self.get_auth_sig()
-        except discord.HTTPException:
+        except ConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig, comments=comments)
         if response.status_code == 200:
-            print(response.text)
+            print(datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), response.text)
             try:
                 try:
                     if "is slower" in response.text:
@@ -122,7 +122,8 @@ class SubmitCog(commands.Cog):
                              (f"\n> {comments}" if comments != "N/A" else "")
                     ))
                 record = player.timesheet(force_reload=True)[course.id]
-            except discord.HTTPException:
+                self.bot.set_discord_account(player, inter.user)
+            except ConnectionError:
                 return await inter.response.send_message(embed=green_embed(
                     title="✅ Record updated!",
                     desc=f"Submitted a time of `{time}` on [{course.game_and_name}]({course.url})." +

@@ -27,7 +27,7 @@ class Player(PlayerBase):
             if response.status_code == 200:
                 self._profile_html = response.text
             else:
-                raise discord.HTTPException
+                raise ConnectionError("Could not connect to Players' Page.")
 
     @property
     def profile_html(self):
