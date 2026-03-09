@@ -122,7 +122,6 @@ class SubmitCog(commands.Cog):
                              (f"\n> {comments}" if comments != "N/A" else "")
                     ))
                 record = player.timesheet(force_reload=True)[course.id]
-                self.bot.set_discord_account(player, inter.user)
             except ConnectionError:
                 return await inter.response.send_message(embed=green_embed(
                     title="✅ Record updated!",
