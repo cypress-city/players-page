@@ -66,8 +66,7 @@ class Course:
 
     def closeness(self, user_input: str):
         term = user_input.lower()
-        return 3 if term in self.abbrev.lower() else 2 if term in self.name.lower() else \
-            1 if term in self.full_display.lower() else 0
+        return closeness(term, self.abbrev.lower()) * 2 + closeness(term, self.name.lower())
 
 
 courses: dict[int, Course] = {
