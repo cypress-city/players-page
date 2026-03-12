@@ -30,7 +30,7 @@ class AdminCog(commands.Cog):
             content=f"🏓 Discord latency: {discord_latency} ms\n"
                     f"🏓 Players' Page latency: ..."
         )
-        response = requests.get("https://www.mariokart64.com/")
+        response = requests.get("https://www.mariokart64.com/mkworld/player.php?pid=252")
         pp_latency = round(response.elapsed.total_seconds() * 1000)
         if response.status_code == 200:
             await message.edit(
