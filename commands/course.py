@@ -77,7 +77,7 @@ def graph(course: Course, player: int = None):
     leaderboard = course.get_leaderboard()
     times = sorted([g.time for g in leaderboard.entries])
     min_time = int(min(times) - 0.1)
-    max_time = times[round(len(times) * 0.8)]
+    max_time = max(times[round(len(times) * 0.8)], min_time+8)
     step_size = 0.1
     x_values = np.arange(min_time, int(max(times))+1, step_size)
     plt.hist(times, bins=x_values, color="#88AACC", label="Players")
