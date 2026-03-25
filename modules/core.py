@@ -214,7 +214,6 @@ class Leaderboard:
 class Bot(commands.Bot):  # main bot class
     def __init__(self, owner_id: int = None):
         intents = discord.Intents.default()
-        intents.message_content = True
         super().__init__(
             intents=intents, command_prefix="pp!",
             allowed_contexts=discord.app_commands.AppCommandContext(guild=True, dm_channel=True, private_channel=True),
