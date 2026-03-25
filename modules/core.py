@@ -99,7 +99,7 @@ def unprettify_time(text: str) -> float:
 
 
 def closeness(search_term: str, match: str) -> int:
-    return 2 if match.startswith(search_term) else 1 if search_term in match else 0
+    return 4 if match == search_term else 2 if match.startswith(search_term) else 1 if search_term in match else 0
 
 
 class Record:
