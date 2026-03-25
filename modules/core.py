@@ -212,7 +212,7 @@ class Leaderboard:
 
 
 class Bot(commands.Bot):  # main bot class
-    def __init__(self):
+    def __init__(self, owner_id: int = None):
         intents = discord.Intents.default()
         intents.message_content = True
         super().__init__(
@@ -221,6 +221,8 @@ class Bot(commands.Bot):  # main bot class
             allowed_installs=discord.app_commands.AppInstallationType(guild=True, user=True)
         )
         self.tokens = self.load_tokens()
+        if owner_id:
+            self.owner_id = owner_id
 
     @staticmethod
     def load_tokens(filename: str = "data/tokens.json") -> dict[str, str]:

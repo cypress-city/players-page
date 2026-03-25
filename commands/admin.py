@@ -10,12 +10,12 @@ class AdminCog(commands.Cog):
 
     @commands.command(name="about", hidden=True)
     async def about_command(self, ctx: commands.Context):
-        if ctx.author == self.bot.application.owner:
+        if ctx.author.id == self.bot.owner_id:
             await ctx.send(f"🏠 Servers: {len(self.bot.guilds)} | 👤 Registered users: {len(self.bot.tokens)}")
 
     @commands.command(name="close", aliases=["stop"], hidden=True)
     async def close_command(self, ctx: commands.Context):
-        if ctx.author == self.bot.application.owner:
+        if ctx.author.id == self.bot.owner_id:
             await ctx.send("😴 Stopping bot.")
             await self.bot.close()
 
@@ -45,7 +45,7 @@ class AdminCog(commands.Cog):
 
     @commands.command(name="sync", hidden=True)
     async def sync_command(self, ctx: commands.Context):
-        if ctx.author == self.bot.application.owner:
+        if ctx.author.id == self.bot.owner_id:
             await self.bot.tree.sync()
             return await ctx.send("✅ Command tree re-synced.")
 
