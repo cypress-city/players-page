@@ -80,7 +80,7 @@ def graph(course: Course, player: int = None):
     max_time = times[round(len(times) * 0.8)]
     step_size = 0.1
     x_values = np.arange(min_time, int(max(times))+1, step_size)
-    plt.hist(times, bins=x_values, color="#88AACC", label="Records")
+    plt.hist(times, bins=x_values, color="#88AACC", label="Players")
     plt.plot(x_values, [len([g for g in times if n - 0.5 <= g < n + 0.5]) * step_size for n in x_values],
              color="black", label="Moving avg.")
     if highlight := leaderboard.get_record_for(player):
@@ -93,6 +93,7 @@ def graph(course: Course, player: int = None):
     plt.xticks(x_range, [f"{int(g // 60)}:{str(int(g % 60)).rjust(2, '0')}" for g in x_range])
     plt.xticks([g+tick_size/2 for g in x_range][:-1], minor=True)
     plt.title(course.game_and_name)
+    plt.ylabel("Number of players")
     plt.legend()
     plt.savefig(f"images/{course.id}-{player}.png")
     plt.close()
