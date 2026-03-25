@@ -5,6 +5,7 @@ from modules.core import rank_emoji, prettify_time
 from modules.courses import courses, course_autocomplete
 from modules.embeds import could_not_connect
 from modules.players import player_autocomplete, get_player, players
+from modules.views import TimesheetSorter
 
 
 class PlayerCog(commands.Cog):
@@ -37,7 +38,12 @@ class PlayerCog(commands.Cog):
                          f"\\#{timesheet[course.id].rank}{rank_emoji(timesheet[course.id].rank)}"
                 ))
         else:
-            await inter.response.send_message(embed=player.timesheet_embed())
+            view = TimesheetSorter(inter.user)
+            await inter.response.send_message(embed=player.timesheet_embed(), view=view)
+            while not await view.wait():
+                view = view.copy()
+                await inter.edit_original_response(embed=player.timesheet_embed(view.sort), view=view)
+            await inter.edit_original_response(embed=player.timesheet_embed(view.sort), view=None)
 
     @discord.app_commands.command(
         name="compare",

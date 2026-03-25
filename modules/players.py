@@ -51,16 +51,20 @@ class Player(PlayerBase):
     def profile_embed(self, title_suffix: str = "", **kwargs):
         return blue_embed(title=f"Player: {self.name} {self.flag}{title_suffix}", url=self.profile, **kwargs)
 
-    def timesheet_embed(self) -> discord.Embed:
-        timesheet = {k: v for k, v in self.timesheet(force_reload=True).items() if v}
+    def timesheet_embed(self, sort: str = "cup") -> discord.Embed:
+        timesheet = {k: v for k, v in sorted(
+            self.timesheet(force_reload=True).items(),
+            key=lambda c: c[1].rank if sort == "rank" else c[0]) if v}
         times = ""
         current_cup = ""
-        for k, v in timesheet.items():
-            course = courses[k]
-            if course.cup != current_cup:
+        for en, it in enumerate(timesheet.items()):
+            course = courses[it[0]]
+            if course.cup != current_cup and sort == "cup":
                 current_cup = course.cup
                 times += "\n"
-            times += f"**{course.game_and_name}** - {v.time_with_link()} - \\#{v.rank}{rank_emoji(v.rank)}\n"
+            if sort == "rank" and en % 5 == 0:
+                times += "\n"
+            times += f"**{course.game_and_name}** - {it[1].time_with_link()} - \\#{it[1].rank}{rank_emoji(it[1].rank)}\n"
         return self.profile_embed(
             desc=times.strip("\n") if times else "Player has no times submitted.",
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "

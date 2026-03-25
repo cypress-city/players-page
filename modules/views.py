@@ -81,3 +81,24 @@ class PageNavigator(SingleUserView):
         await inter.response.defer()
         self.page = self.max_pages
         self.stop()
+
+
+class TimesheetSorter(SingleUserView):
+    def __init__(self, user: discord.User, sort: str = "cup"):
+        super().__init__(user)
+        self.sort = sort
+
+    def copy(self):
+        return TimesheetSorter(self.user, self.sort)
+
+    @discord.ui.button(label='Sort by cup', style=discord.ButtonStyle.blurple)
+    async def sort_by_cup(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.sort = "cup"
+        self.stop()
+
+    @discord.ui.button(label='Sort by rank', style=discord.ButtonStyle.blurple)
+    async def sort_by_rank(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.sort = "rank"
+        self.stop()
