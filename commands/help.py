@@ -68,7 +68,12 @@ help_pages = {
                "* `region`: (optional) A specific country or continent. Leave this blank to view global "
                "leaderboards.\n"
                "* `player`: (optional) A specific player to highlight. Use if you want to quickly see the "
-               "times surrounding a certain player on the leaderboards.",
+               "times surrounding a certain player on the leaderboards.\n\n"
+               "The **`/graph`** command allows you to view the global records for a track displayed on a histogram, "
+               "showing the most common time ranges on the course. "
+               "It has one required field and one optional field:\n"
+               "* `course`: (required) The name of the track.\n"
+               "* `player`: (optional) A specific player to highlight on the graph.",
     "Leaderboards": "There are two different player leaderboards implemented by the bot:\n"
                     "* **`/leaderboard average`**: Average Finish (AF) is the average of a player's ranks on all 30 "
                     "courses.\n"
