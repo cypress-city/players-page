@@ -3,7 +3,7 @@ import discord
 import requests
 import time
 
-from modules.core import Record, rank_emoji, prettify_time, PlayerBase
+from modules.core import Record, rank_emoji, prettify_time, PlayerBase, GeneralConnectionError
 from modules.courses import courses
 from modules.embeds import blue_embed
 
@@ -138,6 +138,9 @@ def get_player(id_no: int = None, name: str = None, force_load: bool = False) ->
 
 async def player_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
     if time.time() - players_last_updated > 60:
-        refresh_player_list()
+        try:
+            refresh_player_list()
+        except GeneralConnectionError:
+            return [discord.app_commands.Choice(name="⚠️ Can't connect to Players' Page. Try again later.", value=0)]
     matches = sorted([g for g in players.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
     return [discord.app_commands.Choice(name=g.name, value=g.id) for g in matches][:25]
