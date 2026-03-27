@@ -5,7 +5,7 @@ import re
 import requests
 import bs4
 
-from modules.core import Bot, ordinal, rank_emoji, prettify_seconds
+from modules.core import Bot, ordinal, rank_emoji, prettify_seconds, GeneralConnectionError
 from modules.embeds import green_embed, red_embed, could_not_connect
 from modules.courses import courses, course_autocomplete
 from modules.players import get_player
@@ -101,7 +101,7 @@ class SubmitCog(commands.Cog):
 
         try:
             auth_timestamp, auth_sig = self.get_auth_sig()
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         response = submit_time(course.id, time_as_float, date, token, auth_timestamp, auth_sig, comments=comments)
@@ -113,7 +113,7 @@ class SubmitCog(commands.Cog):
                         player = get_player(name=re.search(r"(?<=<i>).+(?=,n,)", response.text)[0], force_load=True)
                     else:
                         player = get_player(int(re.search(r"(?<=pid=)[0-9]+", response.text)[0]), force_load=True)
-                except TypeError | requests.exceptions.ConnectTimeout:
+                except (TypeError, GeneralConnectionError):
                     player = None
                 if not player:
                     return await inter.response.send_message(embed=green_embed(
@@ -122,7 +122,7 @@ class SubmitCog(commands.Cog):
                              (f"\n> {comments}" if comments != "N/A" else "")
                     ))
                 record = player.timesheet(force_reload=True)[course.id]
-            except ConnectionError:
+            except GeneralConnectionError:
                 return await inter.response.send_message(embed=green_embed(
                     title="✅ Record updated!",
                     desc=f"Submitted a time of `{time}` on [{course.game_and_name}]({course.url})." +

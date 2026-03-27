@@ -5,8 +5,12 @@ import json
 import os
 import bs4
 import re
+import requests
 
 from modules.embeds import blue_embed
+
+
+GeneralConnectionError = (ConnectionError, requests.ReadTimeout, requests.ConnectionError, AttributeError)
 
 
 _COGS = [

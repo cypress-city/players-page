@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from modules.core import rank_emoji, prettify_time
+from modules.core import rank_emoji, prettify_time, GeneralConnectionError
 from modules.courses import courses, course_autocomplete
 from modules.embeds import could_not_connect
 from modules.players import player_autocomplete, get_player, players
@@ -22,7 +22,7 @@ class PlayerCog(commands.Cog):
         try:
             player = get_player(player)
             timesheet = player.timesheet()
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         if course != -1:
@@ -56,7 +56,7 @@ class PlayerCog(commands.Cog):
             get_player(player1)
             get_player(player2)
             await inter.response.send_message(embed=players[player1].compare_embed(players[player2]))
-        except ConnectionError:
+        except GeneralConnectionError:
             await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
 

@@ -3,7 +3,8 @@ from discord.ext import commands
 import bs4
 import requests
 
-from modules.core import Bot, Leaderboard, LeaderboardEntry, PlayerBase, prettify_time, unprettify_time
+from modules.core import (Bot, Leaderboard, LeaderboardEntry, PlayerBase, prettify_time, unprettify_time,
+                          GeneralConnectionError)
 from modules.courses import region_autocomplete
 from modules.embeds import blue_embed, could_not_connect
 from modules.players import players, player_autocomplete
@@ -113,7 +114,7 @@ class LeaderboardsCog(commands.Cog):
                 "https://www.mariokart64.com/mkworld/stat.php?type=AF",
                 mode="score", title="AF | Average Finish", region_filter=region
             )
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 
@@ -129,7 +130,7 @@ class LeaderboardsCog(commands.Cog):
                 "https://www.mariokart64.com/mkworld/stat.php?type=Total%20Times",
                 mode="time", title="Total Times", region_filter=region
             )
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 

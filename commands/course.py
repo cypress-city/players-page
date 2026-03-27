@@ -3,7 +3,7 @@ from discord.ext import commands
 import matplotlib.pyplot as plt
 import numpy as np
 
-from modules.core import Bot
+from modules.core import Bot, GeneralConnectionError
 from modules.courses import Course, courses, course_autocomplete, region_autocomplete
 from modules.embeds import could_not_connect, blue_embed
 from modules.players import get_player, player_autocomplete, players
@@ -26,7 +26,7 @@ class CourseCog(commands.Cog):
         course = courses[course]
         try:
             leaderboard = course.get_leaderboard(region_filter=region)
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         if player is not None:
@@ -65,7 +65,7 @@ class CourseCog(commands.Cog):
         course = courses[course]
         try:
             course.get_leaderboard()
-        except ConnectionError:
+        except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
         await inter.response.defer()
