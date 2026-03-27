@@ -10,7 +10,7 @@ import requests
 from modules.embeds import blue_embed
 
 
-GeneralConnectionError = (ConnectionError, requests.ReadTimeout, requests.ConnectionError, AttributeError)
+GeneralConnectionError = (ConnectionError, requests.ReadTimeout, requests.ConnectionError, AttributeError, TypeError)
 
 
 _COGS = [

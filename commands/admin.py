@@ -1,7 +1,11 @@
 import requests
+import discord
 from discord.ext import commands
+import time
 
-from modules.core import Bot
+from modules.core import Bot, GeneralConnectionError
+from modules.embeds import blue_embed, red_embed
+from modules.players import get_player
 
 
 class AdminCog(commands.Cog):
@@ -19,29 +23,28 @@ class AdminCog(commands.Cog):
             await ctx.send("😴 Stopping bot.")
             await self.bot.close()
 
-    @commands.command(name="ping")
-    async def ping_command(self, ctx: commands.Context):
-        message = await ctx.send(
-            "🏓 Discord latency: ...\n"
-            "🏓 Players' Page latency: ..."
-        )
-        discord_latency = round((message.created_at - ctx.message.created_at).total_seconds() * 1000)
-        await message.edit(
-            content=f"🏓 Discord latency: {discord_latency} ms\n"
-                    f"🏓 Players' Page latency: ..."
-        )
-        response = requests.get("https://www.mariokart64.com/mkworld/player.php?pid=252")
+    @discord.app_commands.command(
+        name="ping",
+        description="Check the bot's ping and the Players' Page site status."
+    )
+    async def ping_command(self, inter: discord.Interaction):
+        await inter.response.defer()
+        try:
+            response = requests.get("https://www.mariokart64.com/mkworld/player.php?pid=252")
+            get_player(252)
+        except GeneralConnectionError:
+            return await inter.edit_original_response(embed=red_embed(
+                title="⚠️ Could not connect to Players' Page"
+            ))
         pp_latency = round(response.elapsed.total_seconds() * 1000)
         if response.status_code == 200:
-            await message.edit(
-                content=f"🏓 Discord latency: {discord_latency} ms\n"
-                        f"🏓 Players' Page latency: {pp_latency} ms"
-            )
+            return await inter.edit_original_response(embed=blue_embed(
+                title=f"🏓 Players' Page latency: {pp_latency} ms"
+            ))
         else:
-            await message.edit(
-                content=f"🏓 Discord latency: {discord_latency} ms\n"
-                        f"🏓 Players' Page latency: ⚠️ `Error {response.status_code}`"
-            )
+            return await inter.edit_original_response(embed=red_embed(
+                title=f"⚠️ Error {response.status_code}: Could not connect to Players' Page"
+            ))
 
     @commands.command(name="sync", hidden=True)
     async def sync_command(self, ctx: commands.Context):
