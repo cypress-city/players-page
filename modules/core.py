@@ -156,7 +156,10 @@ class PlayerBase:
 
     @property
     def flag(self):
-        return f":flag_{country_codes[self.country]}:"
+        if self.country == "Unknown":
+            return ""
+        else:
+            return f":flag_{country_codes[self.country]}:"
 
     def closeness(self, user_input: str):
         return closeness(user_input.lower(), self.name.lower())
