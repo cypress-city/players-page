@@ -49,6 +49,22 @@ class ConfirmDelete(SingleUserView):
         self.stop()
 
 
+# adapted from https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/utils/paginator.py
+class GoToPage(discord.ui.Modal, title="Go to page..."):
+    page = discord.ui.TextInput(label='Page', placeholder='Enter a number', min_length=1)
+
+    def __init__(self, max_pages: int) -> None:
+        super().__init__()
+        as_string = str(max_pages)
+        self.interaction: discord.Interaction | None = None
+        self.page.placeholder = f'Enter a number between 1 and {as_string}'
+        self.page.max_length = len(as_string)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        self.interaction = interaction
+        self.stop()
+
+
 class PageNavigator(SingleUserView):
     def __init__(self, user: discord.User, max_pages: int, starting_page: int = 1):
         super().__init__(user)
@@ -68,6 +84,27 @@ class PageNavigator(SingleUserView):
     async def back_one(self, inter: discord.Interaction, button: discord.ui.Button):
         await inter.response.defer()
         self.page = max(self.page - 1, 1)
+        self.stop()
+
+    # adapted from https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/utils/paginator.py
+    @discord.ui.button(label='...', style=discord.ButtonStyle.grey)
+    async def go_to_page(self, inter: discord.Interaction, button: discord.ui.Button):
+        modal = GoToPage(self.max_pages)
+        await inter.response.send_modal(modal)
+        timed_out = await modal.wait()
+
+        if timed_out:
+            return await inter.followup.send("Menu timed out.", ephemeral=True)
+        elif self.is_finished():
+            return await modal.interaction.response.send_message("Menu timed out.", ephemeral=True)
+
+        value = str(modal.page.value)
+        if not value.isdigit():
+            return await modal.interaction.response.send_message("Please enter a number.", ephemeral=True)
+
+        value = int(value)
+        self.page = max(1, min(value, self.max_pages))
+        await modal.interaction.response.defer()
         self.stop()
 
     @discord.ui.button(label='>', style=discord.ButtonStyle.blurple)
