@@ -18,6 +18,7 @@ _COGS = [
     "commands.course",
     "commands.help",
     "commands.leaderboards",
+    "commands.misc",
     "commands.player",
     "commands.submit",
     "commands.token"
