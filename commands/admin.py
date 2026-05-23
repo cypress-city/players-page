@@ -23,7 +23,13 @@ class AdminCog(commands.Cog):
     async def sync_command(self, ctx: commands.Context):
         if ctx.author.id == self.bot.owner_id:
             await self.bot.tree.sync()
-            return await ctx.send("✅ Command tree re-synced.")
+            await ctx.send("✅ Command tree re-synced.")
+
+    @commands.command(name="export", hidden=True)
+    async def export_command(self, ctx: commands.Context):
+        if ctx.author.id == self.bot.owner_id:
+            with open("data/tokens.json", "r") as fp:
+                await ctx.send(file=discord.File(fp))
 
 
 async def setup(bot: Bot):
