@@ -8,11 +8,6 @@ class AdminCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.command(name="about", hidden=True)
-    async def about_command(self, ctx: commands.Context):
-        if ctx.author.id == self.bot.owner_id:
-            await ctx.send(f"🏠 Servers: {len(self.bot.guilds)} | 👤 Registered users: {len(self.bot.tokens)}")
-
     @commands.command(name="close", aliases=["stop"], hidden=True)
     async def close_command(self, ctx: commands.Context):
         if ctx.author.id == self.bot.owner_id:

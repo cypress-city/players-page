@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from pathlib import Path
 import json
 import os
@@ -255,6 +255,16 @@ class Bot(commands.Bot):  # main bot class
         self.tokens.pop(str(user.id))
         self.save_tokens()
 
+    @tasks.loop(minutes=5)
+    async def refresh_status(self):
+        text = f"{len(self.guilds)} servers | {len(self.tokens)} users"
+        await self.change_presence(activity=discord.Activity(name=text, type=discord.ActivityType.watching))
+
+    @refresh_status.before_loop
+    async def before_refresh_status(self):
+        await self.wait_until_ready()
+
     async def setup_hook(self) -> None:
         for extension in _COGS:
             await self.load_extension(extension)
+        self.refresh_status.start()
