@@ -35,7 +35,9 @@ class PlayerCog(commands.Cog):
                 return await inter.response.send_message(embed=player.profile_embed(
                     title_suffix=f" > {course.abbrev}",
                     desc=f"**{course.game_and_name}** - {timesheet[course.id].time_with_link()} - "
-                         f"\\#{timesheet[course.id].rank}{rank_emoji(timesheet[course.id].rank)}"
+                         f"\\#{timesheet[course.id].rank}{rank_emoji(timesheet[course.id].rank)}\n"
+                         f"> {timesheet[course.id].date} ({timesheet[course.id].age_in_days()} day"
+                         f"{'' if timesheet[course.id].age_in_days() == 1 else 's'} ago)"
                 ))
         else:
             view = TimesheetSorter(inter.user)

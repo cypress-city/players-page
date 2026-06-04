@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from pathlib import Path
+import datetime
 import json
 import os
 import bs4
@@ -112,6 +113,7 @@ class Record:
         self.time: float = kwargs.get("time", 0.0)
         self.rank: int = kwargs.get("rank", 0)
         self.previous_time: float = kwargs.get("previous_time", 0.0)
+        self.date: str = kwargs.get("date")
         self.video_link = kwargs.get("video_link")
 
     def __bool__(self):
@@ -137,12 +139,18 @@ class Record:
             time=float(record_info["data-sv"]),
             rank=int(record_info["data-tt-position"]),
             previous_time=previous_time,
+            date=record_info["data-tt-date"],
             video_link=video_link
         )
 
     def time_with_link(self):
         return (f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
                 f"{(']('+self.video_link+')') if self.video_link else ''}")
+
+    def age_in_days(self) -> int:
+        pb_date = datetime.date.fromisoformat(self.date)
+        today = datetime.datetime.now(datetime.timezone.utc).date()
+        return (today - pb_date).days
 
 
 class PlayerBase:
