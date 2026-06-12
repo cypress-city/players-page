@@ -22,7 +22,8 @@ _COGS = [
     "commands.misc",
     "commands.player",
     "commands.submit",
-    "commands.token"
+    "commands.token",
+    "commands.utils"
 ]
 
 
@@ -94,13 +95,13 @@ def prettify_time(time: float, include_hour: bool = False) -> str:
 
 def unprettify_time(text: str) -> float:
     if not (match := re.fullmatch(
-            r"((?P<hr>[0-9]):)?(?P<min>[0-9]+)[:'.](?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,4})",
+            r"(((?P<hr>[0-9]):)?(?P<min>[0-9]+)[:'.])?(?P<sec>[0-9]{1,2})[.\"](?P<mil>[0-9]{1,4})",
             text.strip('"')
     )):
         raise ValueError(f"Cannot interpret string as time: {text}")
     return round(
-        (0 if not match["hr"] else int(match["hr"]) * 3600) +
-        int(match["min"]) * 60 + int(match["sec"]) + int(match["mil"]) / 1000, 3
+        (0 if not match["hr"] else int(match["hr"]) * 3600) + (0 if not match["min"] else int(match["min"]) * 60) +
+        int(match["sec"]) + int(str(match["mil"]).ljust(3, "0")) / 1000, 3
     )
 
 
