@@ -20,6 +20,10 @@ class UtilsCog(commands.Cog):
         name="splits",
         description="Calculates the final lap time (split) of a run."
     )
+    @discord.app_commands.describe(
+        finish_time="Finish (total) time of the run", lap1="Lap 1 time", lap2="Lap 2 time",
+        lap3="Lap 3 time (optional)", lap4="Lap 4 time (optional)", lap5="Lap 5 time (optional)"
+    )
     async def splits_command(self, inter: discord.Interaction, finish_time: str, lap1: str, lap2: str,
                              lap3: str = None, lap4: str = None, lap5: str = None):
         try:
