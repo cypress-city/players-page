@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+
 from modules.core import rank_emoji, prettify_time, prettify_seconds, GeneralConnectionError
 from modules.courses import courses, course_autocomplete
 from modules.embeds import could_not_connect
@@ -14,7 +15,10 @@ class RankDiffCog(commands.Cog):
         name="rankdiff",
         description="See how far a player's time is from a target rank on a course."
     )
-    @discord.app_commands.autocomplete(player=player_autocomplete, course=course_autocomplete)
+    @discord.app_commands.autocomplete(
+        player=player_autocomplete, 
+        course=course_autocomplete
+    )
     @discord.app_commands.describe(
         player="Player name",
         course="Track name",
@@ -41,29 +45,33 @@ class RankDiffCog(commands.Cog):
             return await inter.response.send_message(embed=player.profile_embed(
                 desc=f"{player.name} has no time recorded on {course_obj.game_and_name}."
             ), ephemeral=True)
-
-        # Find the entry at the target rank
-        rank_entries = [e for e in leaderboard.entries if e.rank == rank]
-        if not rank_entries:
-            max_rank = leaderboard.entries[-1].rank if leaderboard.entries else 0
+       
+        # Find the entry at the target rank, accounting for ties
+        # (e.g. if ranks 199 and 200 are tied, rank 200 won't exist — find the tie band instead)
+        max_rank = leaderboard.entries[-1].rank if leaderboard.entries else 0
+        if rank > max_rank:
             return await inter.response.send_message(embed=player.profile_embed(
                 desc=f"No time found at rank #{rank} on {course_obj.game_and_name}. "
                      f"The leaderboard only goes up to rank #{max_rank}."
             ), ephemeral=True)
-
+ 
+        # Find the highest rank that is still <= the target rank
+        effective_rank = max(e.rank for e in leaderboard.entries if e.rank <= rank)
+        rank_entries = [e for e in leaderboard.entries if e.rank == effective_rank]
+        is_tied = len(rank_entries) > 1
         target_entry = rank_entries[0]
         player_time = player_record.time
         target_time = target_entry.time
         diff = player_time - target_time  # positive = slower, negative = faster
 
         if diff == 0:
-            diff_str = "ties this rank exactly"
+            diff_str = "0.000"
             diff_sign = ""
         elif diff > 0:
             diff_str = f"+{prettify_seconds(diff)}"
             diff_sign = "+"
         else:
-            diff_str = f"–{prettify_seconds(-diff)}"
+            diff_str = f"**–{prettify_seconds(-diff)}**"
             diff_sign = "–"
 
         player_rank_str = f"#{player_record.rank}{rank_emoji(player_record.rank)}"
