@@ -148,6 +148,11 @@ class Record:
         return (f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
                 f"{(']('+self.video_link+')') if self.video_link else ''}")
 
+    def timesheet_display(self):
+        if not self.time:
+            return self.time_with_link()
+        return f"{self.time_with_link()} - \\#{self.rank}{rank_emoji(self.rank)}"
+
     def age_in_days(self) -> int:
         pb_date = datetime.date.fromisoformat(self.date)
         today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -171,6 +176,10 @@ class PlayerBase:
         else:
             return f":flag_{country_codes[self.country]}:"
 
+    @property
+    def name_and_flag(self):
+        return f"{self.name} {self.flag}"
+
     def closeness(self, user_input: str):
         return closeness(user_input.lower(), self.name.lower())
 
@@ -190,7 +199,7 @@ class LeaderboardEntry:
         return (f"{self.rank}. {'**' if self.player.id == highlight_player_id else ''}"
                 f"{'[' if self.video_link else ''}`{self.score_display}`"
                 f"{(']('+self.video_link+')') if self.video_link else ''}"
-                f" - {self.player.name} {self.player.flag}"
+                f" - {self.player.name_and_flag}"
                 f"{'**' if self.player.id == highlight_player_id else ''}")
 
 

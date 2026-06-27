@@ -3,9 +3,20 @@ import discord
 import requests
 import time
 
-from modules.core import Record, rank_emoji, prettify_time, PlayerBase, GeneralConnectionError
-from modules.courses import courses
+from modules.core import Record, rank_emoji, prettify_seconds, prettify_time, PlayerBase, GeneralConnectionError
+from modules.courses import Course, courses
 from modules.embeds import blue_embed
+
+
+def comp_display(t1: float, t2: float, sep: str = " - "):
+    better_time = min(t1, t2)
+    return f"{'🔹 **' if t1 == better_time > 0 else ''}" \
+        f"`{prettify_time(t1)}`" \
+        f"{'**' if t1 == better_time > 0 else ''}" \
+        f"{sep}" \
+        f"{'**' if t2 == better_time > 0 else ''}" \
+        f"`{prettify_time(t2)}`" \
+        f"{'** 🔸' if t2 == better_time > 0 else ''}"
 
 
 class Player(PlayerBase):
@@ -46,36 +57,66 @@ class Player(PlayerBase):
                     course_id = int(row.find("td")["data-sv"])
                     if (record := Record.from_html_row(row)) or include_blanks:
                         ret[course_id] = record
+        elif include_blanks:
+            return {g: Record() for g in courses}
         return ret
 
     def profile_embed(self, title_suffix: str = "", **kwargs):
-        return blue_embed(title=f"Player: {self.name} {self.flag}{title_suffix}", url=self.profile, **kwargs)
+        return blue_embed(title=f"Player: {self.name_and_flag}{title_suffix}", url=self.profile, **kwargs)
 
     def timesheet_embed(self, sort: str = "cup") -> discord.Embed:
         timesheet = {k: v for k, v in sorted(
             self.timesheet(force_reload=True).items(),
             key=lambda c: c[1].rank if sort == "rank" else c[0]) if v}
-        times = ""
-        current_cup = ""
-        for en, it in enumerate(timesheet.items()):
-            course = courses[it[0]]
-            if course.cup != current_cup and sort == "cup":
-                current_cup = course.cup
-                times += "\n"
-            if sort == "rank" and en % 5 == 0:
-                times += "\n"
-            times += f"**{course.game_and_name}** - {it[1].time_with_link()} - \\#{it[1].rank}{rank_emoji(it[1].rank)}\n"
+        if not any(timesheet.values()):
+            times = "Player has no times submitted."
+        else:
+            times = ""
+            current_cup = ""
+            for en, it in enumerate(timesheet.items()):
+                course = courses[it[0]]
+                if course.cup != current_cup and sort == "cup":
+                    current_cup = course.cup
+                    times += "\n"
+                if sort == "rank" and en % 5 == 0:
+                    times += "\n"
+                times += f"**{course.game_and_name}** - {it[1].timesheet_display()}\n"
         return self.profile_embed(
-            desc=times.strip("\n") if times else "Player has no times submitted.",
+            desc=times.strip("\n"),
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "
                     f"AF - {round(sum(g.rank for g in timesheet.values()) / len(timesheet), 4)}"
                     if len(timesheet) == len(courses) else f"Courses - {len(timesheet)}/{len(courses)}"
                     if timesheet else None)
         )
 
-    def compare_embed(self, opponent) -> discord.Embed:
+    def compare_embed(self, opponent, specific_course: Course = None) -> discord.Embed:
         my_timesheet = self.timesheet(force_reload=True)
         their_timesheet = opponent.timesheet(force_reload=True)
+
+        if specific_course:  # naive - assumes both players have a time on the course
+            t1 = my_timesheet[specific_course.id]
+            t2 = their_timesheet[specific_course.id]
+            if t1.time and t2.time:
+                delta = f"-# `+{prettify_seconds(t1.time - t2.time)}s` | " \
+                        f"+{abs(t1.rank - t2.rank)} positions"
+                if t1.time <= t2.time:
+                    desc = f"**{self.name}** - {t1.timesheet_display()}\n{delta}\n" \
+                           f"**{opponent.name}** - {t2.timesheet_display()}"
+                else:
+                    desc = f"**{opponent.name}** - {t2.timesheet_display()}\n{delta}\n" \
+                           f"**{self.name}** - {t1.timesheet_display()}"
+            else:
+                if t2.time:
+                    desc = f"**{opponent.name}** - {t2.timesheet_display()}\n" \
+                           f"**{self.name}** - {t1.timesheet_display()}"
+                else:
+                    desc = f"**{self.name}** - {t1.timesheet_display()}\n" \
+                           f"**{opponent.name}** - {t2.timesheet_display()}"
+            return blue_embed(
+                title=f"{self.name_and_flag} vs. {opponent.name_and_flag} > {specific_course.abbrev}",
+                desc=desc
+            )
+
         scores = [0, 0, 0]
         ret = ""
         current_cup = ""
@@ -96,15 +137,10 @@ class Player(PlayerBase):
                     scores[1] += 1
 
             ret += f"**{course.game_and_name}:** " \
-                   f"{'🔹 **' if my_timesheet[course.id].time == better_time > 0 else ''}" \
-                   f"`{prettify_time(my_timesheet[course.id].time)}`" \
-                   f"{'**' if my_timesheet[course.id].time == better_time > 0 else ''} - " \
-                   f"{'**' if their_timesheet[course.id].time == better_time > 0 else ''}" \
-                   f"`{prettify_time(their_timesheet[course.id].time)}`" \
-                   f"{'** 🔸' if their_timesheet[course.id].time == better_time > 0 else ''}\n"
+                   f"{comp_display(my_timesheet[course.id].time, their_timesheet[course.id].time)}\n"
 
         return blue_embed(
-            title=f"🔹 {self.name} {self.flag} vs. 🔸 {opponent.name} {opponent.flag}",
+            title=f"🔹 {self.name_and_flag} vs. 🔸 {opponent.name_and_flag}",
             desc=ret.strip("\n"),
             footer=f"Total: 🔷 {scores[0]} - {scores[1]} 🔶" +
                    (f" ({scores[2]} tie{'s' if scores[2] > 1 else ''})" if scores[2] else "")

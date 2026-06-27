@@ -51,13 +51,21 @@ class PlayerCog(commands.Cog):
         name="compare",
         description="Compare two players' timesheets."
     )
-    @discord.app_commands.autocomplete(player1=player_autocomplete, player2=player_autocomplete)
-    @discord.app_commands.describe(player1="Player 1 name", player2="Player 2 name")
-    async def compare_command(self, inter: discord.Interaction, player1: int, player2: int):
+    @discord.app_commands.autocomplete(
+        player1=player_autocomplete, player2=player_autocomplete, course=course_autocomplete
+    )
+    @discord.app_commands.describe(player1="Player 1 name", player2="Player 2 name", course="Track name")
+    async def compare_command(self, inter: discord.Interaction, player1: int, player2: int, course: int = -1):
         try:
             get_player(player1)
             get_player(player2)
-            await inter.response.send_message(embed=players[player1].compare_embed(players[player2]))
+            if course != -1:
+                course = courses[course]
+            else:
+                course = None
+            await inter.response.send_message(
+                embed=players[player1].compare_embed(players[player2], specific_course=course)
+            )
         except GeneralConnectionError:
             await inter.response.send_message(embed=could_not_connect, ephemeral=True)
 
