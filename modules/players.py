@@ -10,7 +10,7 @@ from modules.embeds import blue_embed
 
 def comp_display(infill: str, t1: float, t2: float):
     better_time = min(t1, t2)
-    return f"{'🔹' if t1 == better_time > 0 else '🔸' if t2 == better_time > 0 else '▪️' if better_time == 0 else '▫️'} " \
+    return f"{'▫️' if t1 == t2 > 0 else '🔹' if t1 == better_time > 0 else '🔸' if t2 == better_time > 0 else '▪️'} " \
         f"{infill} " \
         f"{'**' if t1 == better_time > 0 else ''}" \
         f"`{prettify_time(t1)}`" \
