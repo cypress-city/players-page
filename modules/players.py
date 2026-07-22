@@ -8,15 +8,17 @@ from modules.courses import Course, courses
 from modules.embeds import blue_embed
 
 
-def comp_display(t1: float, t2: float, sep: str = " - "):
+def comp_display(infill: str, t1: float, t2: float):
     better_time = min(t1, t2)
-    return f"{'🔹 **' if t1 == better_time > 0 else ''}" \
+    return f"{'🔹' if t1 == better_time > 0 else '🔸' if t2 == better_time > 0 else '▫️'} " \
+        f"{infill} " \
+        f"{'**' if t1 == better_time > 0 else ''}" \
         f"`{prettify_time(t1)}`" \
         f"{'**' if t1 == better_time > 0 else ''}" \
-        f"{sep}" \
+        f" - " \
         f"{'**' if t2 == better_time > 0 else ''}" \
         f"`{prettify_time(t2)}`" \
-        f"{'** 🔸' if t2 == better_time > 0 else ''}"
+        f"{'**' if t2 == better_time > 0 else ''}"
 
 
 class Player(PlayerBase):
@@ -136,8 +138,9 @@ class Player(PlayerBase):
                 else:
                     scores[1] += 1
 
-            ret += f"**{course.game_and_name}:** " \
-                   f"{comp_display(my_timesheet[course.id].time, their_timesheet[course.id].time)}\n"
+            ret += comp_display(
+                f"**{course.game_and_name}:**", my_timesheet[course.id].time, their_timesheet[course.id].time
+            ) + "\n"
 
         return blue_embed(
             title=f"🔹 {self.name_and_flag} vs. 🔸 {opponent.name_and_flag}",
