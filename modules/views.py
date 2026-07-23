@@ -3,7 +3,7 @@ import discord
 
 class SingleUserView(discord.ui.View):
     def __init__(self, user: discord.User):
-        super().__init__(timeout=180)
+        super().__init__(timeout=300)
         self.user = user
 
     async def interaction_check(self, inter: discord.Interaction, /) -> bool:
@@ -138,4 +138,31 @@ class TimesheetSorter(SingleUserView):
     async def sort_by_rank(self, inter: discord.Interaction, button: discord.ui.Button):
         await inter.response.defer()
         self.sort = "rank"
+        self.stop()
+
+
+class ComboStatBrowser(SingleUserView):
+    def __init__(self, user: discord.User, mode: str = "stats"):
+        super().__init__(user)
+        self.mode = mode
+
+    def copy(self):
+        return ComboStatBrowser(self.user, self.mode)
+
+    @discord.ui.button(label='📊 Stats', style=discord.ButtonStyle.blurple)
+    async def stats_mode(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.mode = "stats"
+        self.stop()
+
+    @discord.ui.button(label='🪙 Coin curve', style=discord.ButtonStyle.blurple)
+    async def coins_mode(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.mode = "coins"
+        self.stop()
+
+    @discord.ui.button(label='🚗 Terrain speeds', style=discord.ButtonStyle.blurple)
+    async def speeds_mode(self, inter: discord.Interaction, button: discord.ui.Button):
+        await inter.response.defer()
+        self.mode = "speeds"
         self.stop()
