@@ -131,6 +131,7 @@ class ComboPart:
             img_name = f"images/{simplify_text(self.name)}-coins.png"
 
         plt.savefig(img_name, dpi=200)
+        plt.close()
         return img_name
     
     @property
@@ -183,6 +184,7 @@ class ComboPart:
 
         ax.legend(loc="upper left")
         plt.savefig(img_name, dpi=200)
+        plt.close()
         return img_name
 
 
