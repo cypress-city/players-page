@@ -64,7 +64,7 @@ country_codes = {
     'Timor-Leste': 'tl', 'Togo': 'tg', 'Tokelau': 'tk', 'Tonga': 'to', 'Trinidad and Tobago': 'tt', 'Tunisia': 'tn',
     'Turkey': 'tr', 'Turkmenistan': 'tm', 'Uganda': 'ug', 'Ukraine': 'ua', 'United Arab Emirates': 'ae',
     'Uruguay': 'uy', 'Uzbekistan': 'uz', 'Vanuatu': 'vu', 'Venezuela': 've', 'Viet Nam': 'vn', 'Western Sahara': 'eh',
-    'Yemen': 'ye', 'Zambia': 'zm', 'Zimbabwe': 'zw'
+    'Yemen': 'ye', 'Zambia': 'zm', 'Zimbabwe': 'zw', 'Puerto Rico': 'pr'
 }
 
 
