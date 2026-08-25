@@ -171,7 +171,7 @@ class PlayerBase:
 
     @property
     def flag(self):
-        if self.country == "Unknown":
+        if self.country not in country_codes:
             return ""
         else:
             return f":flag_{country_codes[self.country]}:"
@@ -260,7 +260,7 @@ class Bot(commands.Bot):  # main bot class
         if not os.path.exists(filename):
             Path(filename).parent.mkdir(exist_ok=True, parents=True)
         with open(filename, "w") as f:
-            json.dump(self.tokens, f)
+            json.dump(self.tokens, f, indent=2)
 
     def set_token(self, user: discord.User, token: str):
         self.tokens[str(user.id)] = token
