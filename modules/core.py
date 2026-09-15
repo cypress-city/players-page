@@ -237,11 +237,17 @@ class Leaderboard:
         )
 
 
+class SplitLeaderboard:
+    def __init__(self, full_boards: Leaderboard, base_boards: Leaderboard):
+        self.full = full_boards
+        self.base = base_boards
+
+
 class Bot(commands.Bot):  # main bot class
     def __init__(self, owner_id: int = None):
         intents = discord.Intents.default()
         super().__init__(
-            intents=intents, command_prefix="pp!",
+            intents=intents, command_prefix="!",
             allowed_contexts=discord.app_commands.AppCommandContext(guild=True, dm_channel=True, private_channel=True),
             allowed_installs=discord.app_commands.AppInstallationType(guild=True, user=True)
         )

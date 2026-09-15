@@ -4,11 +4,11 @@ import bs4
 import requests
 
 from modules.core import (Bot, Leaderboard, LeaderboardEntry, PlayerBase, prettify_time, unprettify_time,
-                          GeneralConnectionError)
+                          GeneralConnectionError, SplitLeaderboard)
 from modules.courses import region_autocomplete
 from modules.embeds import blue_embed, could_not_connect
 from modules.players import players, player_autocomplete
-from modules.views import PageNavigator
+from modules.views import LeaderboardView
 
 
 class PlayerLeaderboardEntry(LeaderboardEntry):
@@ -75,30 +75,37 @@ class LeaderboardsCog(commands.Cog):
     group = discord.app_commands.Group(name="leaderboard", description="Overall player leaderboards.")
 
     @staticmethod
-    async def browse_leaderboard(inter: discord.Interaction, leaderboard: Leaderboard, player: int, region: str):
+    async def browse_leaderboard(inter: discord.Interaction, split_leaderboard: SplitLeaderboard, player: int,
+                                 region: str, include_dlc: bool = True, ignore_failed_highlight: bool = False):
+        leaderboard = split_leaderboard.full if include_dlc else split_leaderboard.base
         if player is not None:
             if leaderboard.get_record_for(player):
                 starting_page = (leaderboard.get_record_for(player).rank - 1) // 10 + 1
             else:
-                return await inter.response.send_message(embed=blue_embed(
-                    title=leaderboard.name,
-                    desc=f"{players[player].name} does not have a complete timesheet.",
-                    url=leaderboard.url
-                ), ephemeral=True)
+                if ignore_failed_highlight:
+                    starting_page = 1
+                else:
+                    return await inter.response.send_message(embed=blue_embed(
+                        title=leaderboard.name,
+                        desc=f"{players[player].name} does not have a complete timesheet"
+                             f"{' including DLC' if include_dlc else ''}.",
+                        url=leaderboard.url
+                    ), ephemeral=True)
         else:
             starting_page = 1
 
         if not leaderboard.entries:
             return await inter.response.send_message(embed=blue_embed(
                 title=leaderboard.name + (f" > {region}" if region else ""),
-                desc="No complete timesheets found.",
+                desc=f"No complete timesheets{' including DLC' if include_dlc else ''} found.",
                 url=leaderboard.url
             ))
 
-        view = PageNavigator(inter.user, leaderboard.pages, starting_page=starting_page)
+        view = LeaderboardView(inter.user, leaderboard, starting_page=starting_page, include_dlc=include_dlc)
         await inter.response.send_message(embed=leaderboard.embed(view.page, player), view=view)
         while not await view.wait():
             view = view.copy()
+            leaderboard = split_leaderboard.full if view.include_dlc else split_leaderboard.base
             await inter.edit_original_response(embed=leaderboard.embed(view.page, player), view=view)
         await inter.edit_original_response(embed=leaderboard.embed(view.page, player), view=None)
 
@@ -110,12 +117,17 @@ class LeaderboardsCog(commands.Cog):
     @discord.app_commands.describe(player="Player name", region="Country or region name")
     async def average_finish(self, inter: discord.Interaction, player: int = None, region: str = None):
         try:
-            leaderboard = load_leaderboard(
+            full_leaderboard = load_leaderboard(
                 "https://www.mariokart64.com/mkworld/stat.php?type=AF",
-                mode="score", title="AF | Average Finish", region_filter=region
+                mode="score", title="AF | Average Finish (DLC included)", region_filter=region
+            )
+            base_leaderboard = load_leaderboard(
+                "https://www.mariokart64.com/mkworld/stat.php?type=AF&base-only=on",
+                mode="score", title="AF | Average Finish (base game only)", region_filter=region
             )
         except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
+        leaderboard = SplitLeaderboard(full_leaderboard, base_leaderboard)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 
     @group.command(
@@ -126,12 +138,17 @@ class LeaderboardsCog(commands.Cog):
     @discord.app_commands.describe(player="Player name", region="Country or region name")
     async def total_time(self, inter: discord.Interaction, player: int = None, region: str = None):
         try:
-            leaderboard = load_leaderboard(
+            full_leaderboard = load_leaderboard(
                 "https://www.mariokart64.com/mkworld/stat.php?type=Total%20Times",
-                mode="time", title="Total Times", region_filter=region
+                mode="time", title="Total Times (DLC included)", region_filter=region
+            )
+            base_leaderboard = load_leaderboard(
+                "https://www.mariokart64.com/mkworld/stat.php?type=Total%20Times&base-only=on",
+                mode="time", title="Total Times (base game only)", region_filter=region
             )
         except GeneralConnectionError:
             return await inter.response.send_message(embed=could_not_connect, ephemeral=True)
+        leaderboard = SplitLeaderboard(full_leaderboard, base_leaderboard)
         return await self.browse_leaderboard(inter, leaderboard, player, region)
 
 

@@ -4,7 +4,7 @@ import requests
 import time
 
 from modules.core import Record, rank_emoji, prettify_seconds, prettify_time, PlayerBase, GeneralConnectionError
-from modules.courses import Course, courses
+from modules.courses import Course, COURSES
 from modules.embeds import blue_embed
 
 
@@ -47,7 +47,8 @@ class Player(PlayerBase):
         self._load_profile(force_reload=False)
         return self._profile_html
 
-    def timesheet(self, force_reload: bool = False, include_blanks: bool = True) -> dict[int, Record]:
+    def timesheet(self, force_reload: bool = False, include_blanks: bool = True,
+                  include_dlc: bool = True) -> dict[int, Record]:
         """Returns the player's timesheet as a dict with the course ID as the key and a Record object as the value."""
         self._load_profile(force_reload=force_reload)
         soup = bs4.BeautifulSoup(self.profile_html, "html.parser")
@@ -57,43 +58,46 @@ class Player(PlayerBase):
             for row in timetable.find_all("tr"):
                 if row.find("td", attrs={"data-sv": True}):
                     course_id = int(row.find("td")["data-sv"])
-                    if (record := Record.from_html_row(row)) or include_blanks:
+                    if (include_dlc or course_id < 30) and ((record := Record.from_html_row(row)) or include_blanks):
                         ret[course_id] = record
         elif include_blanks:
-            return {g: Record() for g in courses}
+            return {g: Record() for g in COURSES}
         return ret
 
     def profile_embed(self, title_suffix: str = "", **kwargs):
         return blue_embed(title=f"Player: {self.name_and_flag}{title_suffix}", url=self.profile, **kwargs)
 
-    def timesheet_embed(self, sort: str = "cup") -> discord.Embed:
+    def timesheet_embed(self, sort: str = "cup", force_reload: bool = False,
+                        include_dlc: bool = False) -> discord.Embed:
         timesheet = {k: v for k, v in sorted(
-            self.timesheet(force_reload=True).items(),
+            self.timesheet(force_reload=force_reload, include_dlc=include_dlc).items(),
             key=lambda c: c[1].rank if sort == "rank" else c[0]) if v}
+        num_courses = len(COURSES) if include_dlc else 30
         if not any(timesheet.values()):
             times = "Player has no times submitted."
         else:
             times = ""
             current_cup = ""
             for en, it in enumerate(timesheet.items()):
-                course = courses[it[0]]
+                course = COURSES[it[0]]
                 if course.cup != current_cup and sort == "cup":
                     current_cup = course.cup
                     times += "\n"
                 if sort == "rank" and en % 5 == 0:
                     times += "\n"
-                times += f"**{course.game_and_name}** - {it[1].timesheet_display()}\n"
+                times += f"**{course.abbrev}** - {it[1].timesheet_display()}\n"
         return self.profile_embed(
             desc=times.strip("\n"),
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "
                     f"AF - {round(sum(g.rank for g in timesheet.values()) / len(timesheet), 4)}"
-                    if len(timesheet) == len(courses) else f"Courses - {len(timesheet)}/{len(courses)}"
+                    if len(timesheet) == num_courses else f"Courses - {len(timesheet)}/{num_courses}"
                     if timesheet else None)
         )
 
-    def compare_embed(self, opponent, specific_course: Course = None) -> discord.Embed:
-        my_timesheet = self.timesheet(force_reload=True)
-        their_timesheet = opponent.timesheet(force_reload=True)
+    def compare_embed(self, opponent, specific_course: Course = None, force_reload: bool = False,
+                      include_dlc: bool = True) -> discord.Embed:
+        my_timesheet = self.timesheet(force_reload=force_reload, include_dlc=include_dlc)
+        their_timesheet = opponent.timesheet(force_reload=force_reload, include_dlc=include_dlc)
 
         if specific_course:  # naive - assumes both players have a time on the course
             t1 = my_timesheet[specific_course.id]
@@ -120,31 +124,43 @@ class Player(PlayerBase):
             )
 
         scores = [0, 0, 0]
-        ret = ""
-        current_cup = ""
 
-        for course in courses.values():
-            if course.cup != current_cup:
-                current_cup = course.cup
-                ret += "\n"
+        def show_courses(courses: list[Course]):
+            ret = ""
+            current_cup = courses[0].cup
 
-            better_time = min(my_timesheet[course.id].time, their_timesheet[course.id].time)
-            if better_time:
-                if my_timesheet[course.id].time == better_time:
-                    if their_timesheet[course.id].time == better_time:
-                        scores[2] += 1
+            for course in courses:
+                if course.cup != current_cup:
+                    current_cup = course.cup
+                    ret += "\n"
+
+                better_time = min(my_timesheet[course.id].time, their_timesheet[course.id].time)
+                if better_time:
+                    if my_timesheet[course.id].time == better_time:
+                        if their_timesheet[course.id].time == better_time:
+                            scores[2] += 1
+                        else:
+                            scores[0] += 1
                     else:
-                        scores[0] += 1
-                else:
-                    scores[1] += 1
+                        scores[1] += 1
 
-            ret += comp_display(
-                f"**{course.game_and_name}:**", my_timesheet[course.id].time, their_timesheet[course.id].time
-            ) + "\n"
+                ret += comp_display(
+                    f"**{course.abbrev}:**", my_timesheet[course.id].time, their_timesheet[course.id].time
+                ) + "\n"
+
+            return ret.strip("\n")
+
+        if include_dlc:
+            kwargs = {
+                "desc": show_courses(list(COURSES.values())[:30]),
+                "fields": {"DLC": show_courses(list(COURSES.values())[30:])}
+            }
+        else:
+            kwargs = {"desc": show_courses(list(COURSES.values())[:30])}
 
         return blue_embed(
             title=f"🔹 {self.name_and_flag} vs. 🔸 {opponent.name_and_flag}",
-            desc=ret.strip("\n"),
+            **kwargs,
             footer=f"Total: 🔷 {scores[0]} - {scores[1]} 🔶" +
                    (f" ({scores[2]} tie{'s' if scores[2] > 1 else ''})" if scores[2] else "")
         )

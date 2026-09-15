@@ -12,6 +12,9 @@ def construct_embed(**kwargs) -> discord.Embed:
         color=kwargs.get("color"),
         url=kwargs.get("url")
     )
+    fields = kwargs.get("fields", {})
+    for t, d in fields.items():
+        ret.add_field(name=t, value=str(d), inline=kwargs.get("same_line", True))
     ret.set_thumbnail(url=kwargs.get("thumb"))
     ret.set_footer(text=kwargs.get("footer"))
     return ret

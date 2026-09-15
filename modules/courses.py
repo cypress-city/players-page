@@ -69,7 +69,7 @@ class Course:
         return closeness(term, self.abbrev.lower()) * 8 + closeness(term, self.name.lower())
 
 
-courses: dict[int, Course] = {
+COURSES: dict[int, Course] = {
     0: Course("MBC", "Mario Bros. Circuit", 0, "Mushroom"),
     1: Course("CC", "Crown City", 1, "Mushroom"),
     2: Course("WS", "Whistlestop Summit", 2, "Mushroom"),
@@ -99,12 +99,22 @@ courses: dict[int, Course] = {
     26: Course("BC", "Bowser's Castle", 26, "Lightning"),
     27: Course("AH", "Acorn Heights", 27, "Special"),
     28: Course("rMC", "Mario Circuit", 28, "Special", "SNES"),
-    29: Course("RR", "Rainbow Road", 29, "Special")
+    29: Course("RR", "Rainbow Road", 29, "Special"),
+    30: Course("rVL1", "Vanilla Lake 1", 30, "DLC", "SNES"),
+    31: Course("rKB1", "Koopa Beach 1", 31, "DLC", "SNES"),
+    32: Course("rGV1", "Ghost Valley 1", 32, "DLC", "SNES"),
+    33: Course("rGV2", "Ghost Valley 2", 33, "DLC", "SNES"),
+    34: Course("rGV3", "Ghost Valley 3", 34, "DLC", "SNES"),
+    35: Course("rCI1", "Choco Island 1", 35, "DLC", "SNES"),
+    36: Course("rCI2", "Choco Island 2", 36, "DLC", "SNES"),
+    37: Course("rMC1", "Mario Circuit 1", 37, "DLC", "SNES"),
+    38: Course("rMC2", "Mario Circuit 2", 38, "DLC", "SNES"),
+    39: Course("rMC3", "Mario Circuit 3", 39, "DLC", "SNES")
 }
 
 
 async def course_autocomplete(inter: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-    matches = sorted([g for g in courses.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
+    matches = sorted([g for g in COURSES.values() if g.closeness(current)], key=lambda c: -c.closeness(current))
     return [discord.app_commands.Choice(name=g.full_display, value=g.id) for g in matches][:25]
 
 

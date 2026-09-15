@@ -268,8 +268,7 @@ class UtilsCog(commands.Cog):
         final_split = finish_time - sum(splits)
         return await inter.response.send_message(
             f"**{prettify_split(final_split)}**"
-            f"\n-# {' - '.join(prettify_split(g) for g in [*splits, final_split])} = {prettify_time(finish_time)}",
-            ephemeral=True
+            f"\n-# {' - '.join(prettify_split(g) for g in [*splits, final_split])} = {prettify_time(finish_time)}"
         )
 
     group = discord.app_commands.Group(name="combo", description="Character + kart stats.")

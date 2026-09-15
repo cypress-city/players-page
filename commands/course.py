@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from modules.core import Bot, GeneralConnectionError
-from modules.courses import Course, courses, course_autocomplete, region_autocomplete
+from modules.courses import Course, COURSES, course_autocomplete, region_autocomplete
 from modules.embeds import could_not_connect, blue_embed
 from modules.players import get_player, player_autocomplete, players
 from modules.views import PageNavigator
@@ -23,7 +23,7 @@ class CourseCog(commands.Cog):
     )
     @discord.app_commands.describe(course="Track name", player="Player name", region="Country or region name")
     async def course_command(self, inter: discord.Interaction, course: int, player: int = None, region: str = None):
-        course = courses[course]
+        course = COURSES[course]
         try:
             leaderboard = course.get_leaderboard(region_filter=region)
         except GeneralConnectionError:
@@ -62,7 +62,7 @@ class CourseCog(commands.Cog):
     )
     @discord.app_commands.describe(course="Track name", player="Player name")
     async def graph_command(self, inter: discord.Interaction, course: int, player: int = None):
-        course = courses[course]
+        course = COURSES[course]
         try:
             course.get_leaderboard()
         except GeneralConnectionError:

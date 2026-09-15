@@ -1,5 +1,7 @@
 import discord
 
+from modules.core import Leaderboard
+
 
 class SingleUserView(discord.ui.View):
     def __init__(self, user: discord.User):
@@ -120,13 +122,59 @@ class PageNavigator(SingleUserView):
         self.stop()
 
 
-class TimesheetSorter(SingleUserView):
-    def __init__(self, user: discord.User, sort: str = "cup"):
-        super().__init__(user)
-        self.sort = sort
+class ToggleLeaderboardButton(discord.ui.Button):
+    def __init__(self, include_dlc: bool, style: discord.ButtonStyle | int = discord.ButtonStyle.blurple):
+        self.include_dlc = include_dlc
+        super().__init__(label="Show base game only" if self.include_dlc else "Show DLC included", style=style)
+
+    async def callback(self, i: discord.Interaction):
+        await i.response.defer()
+        self.view.include_dlc = not self.include_dlc
+        self.view.page = 1
+        self.view.stop()
+
+
+class LeaderboardView(PageNavigator):
+    def __init__(self, user: discord.User, leaderboard: Leaderboard, starting_page: int = 1, include_dlc: bool = True):
+        super().__init__(user, max_pages=leaderboard.pages, starting_page=starting_page)
+        self.leaderboard = leaderboard
+        self.include_dlc = include_dlc
+        self.add_item(ToggleLeaderboardButton(self.include_dlc))
 
     def copy(self):
-        return TimesheetSorter(self.user, self.sort)
+        return LeaderboardView(self.user, self.leaderboard, self.page, self.include_dlc)
+
+
+class ToggleDLCButton(discord.ui.Button):
+    def __init__(self, is_shown: bool, style: discord.ButtonStyle | int = discord.ButtonStyle.blurple):
+        self.is_shown = is_shown
+        super().__init__(label=f"{'Hide' if self.is_shown else 'Show'} DLC", style=style)
+
+    async def callback(self, i: discord.Interaction):
+        await i.response.defer()
+        self.view.include_dlc = not self.is_shown
+        self.view.stop()
+
+
+class CompareView(SingleUserView):
+    def __init__(self, user: discord.User, include_dlc: bool = True):
+        super().__init__(user)
+        self.include_dlc = include_dlc
+        self.add_item(ToggleDLCButton(include_dlc))
+
+    def copy(self):
+        return CompareView(self.user, self.include_dlc)
+
+
+class TimesheetSorter(SingleUserView):
+    def __init__(self, user: discord.User, sort: str = "cup", include_dlc: bool = True):
+        super().__init__(user)
+        self.sort = sort
+        self.include_dlc = include_dlc
+        self.add_item(ToggleDLCButton(include_dlc))
+
+    def copy(self):
+        return TimesheetSorter(self.user, self.sort, self.include_dlc)
 
     @discord.ui.button(label='Sort by cup', style=discord.ButtonStyle.blurple)
     async def sort_by_cup(self, inter: discord.Interaction, button: discord.ui.Button):

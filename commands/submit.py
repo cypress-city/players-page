@@ -7,7 +7,7 @@ import bs4
 
 from modules.core import Bot, ordinal, rank_emoji, prettify_seconds, GeneralConnectionError
 from modules.embeds import green_embed, red_embed, could_not_connect
-from modules.courses import courses, course_autocomplete
+from modules.courses import COURSES, course_autocomplete
 from modules.players import get_player
 
 
@@ -97,7 +97,7 @@ class SubmitCog(commands.Cog):
             date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
 
         time_as_float = int(reg.group("min")) * 60 + float(reg.group("sec"))
-        course = courses[course]
+        course = COURSES[course]
 
         try:
             auth_timestamp, auth_sig = self.get_auth_sig()
