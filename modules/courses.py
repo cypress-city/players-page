@@ -109,7 +109,15 @@ COURSES: dict[int, Course] = {
     36: Course("rCI2", "Choco Island 2", 36, "DLC", "SNES"),
     37: Course("rMC1", "Mario Circuit 1", 37, "DLC", "SNES"),
     38: Course("rMC2", "Mario Circuit 2", 38, "DLC", "SNES"),
-    39: Course("rMC3", "Mario Circuit 3", 39, "DLC", "SNES")
+    39: Course("rMC3", "Mario Circuit 3", 39, "DLC", "SNES"),
+    40: Course("MBC2", "Mario Bros. Circuit 2", 40, "DLC2"),
+    41: Course("rDH2", "Desert Hills 2", 41, "DLC2", "DS"),
+    42: Course("rSGB2", "Shy Guy Bazaar 2", 42, "DLC2", "3DS"),
+    43: Course("rWS2", "Wario Stadium 2", 43, "DLC2", "N64"),
+    44: Course("rAF2", "Airship Fortress 2", 44, "DLC2", "DS"),
+    45: Course("rDKP2", "DK Pass 2", 45, "DLC2", "DS"),
+    46: Course("rKTB2", "Koopa Troopa Beach 2", 46, "DLC2", "SNES"),
+    47: Course("SSS2", "Salty Salty Speedway 2", 47, "DLC2"),
 }
 
 
