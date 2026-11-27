@@ -74,30 +74,32 @@ class Player(PlayerBase):
             key=lambda c: c[1].rank if sort == "rank" else c[0]) if v}
         num_courses = len(COURSES) if include_dlc else 30
 
-        def show_courses(courses: list[Course]):
+        def show_courses(courses: list[Course], allow_link: bool = True):
             times = ""
             current_cup = ""
-            for course in courses:
+            if sort == "rank":
+                courses = sorted(courses, key=lambda c: timesheet[c.id].rank)
+            for en, course in enumerate(courses):
                 if course.cup != current_cup and sort == "cup":
                     current_cup = course.cup
                     times += "\n"
                 if sort == "rank" and en % 5 == 0:
                     times += "\n"
-                times += f"**{course.abbrev}** - {timesheet[course.id].timesheet_display()}\n"
+                times += f"**{course.abbrev}** - {timesheet[course.id].timesheet_display(allow_link)}\n"
+            if len(times) > 4096:
+                return "-# Video links have been omitted due to character limits.\n" + \
+                    show_courses(courses, allow_link=False)
             return times
 
         if not any(timesheet.values()):
-            kwargs = {"desc": "Player has no times submitted."}
+            d = "Player has no times submitted."
         else:
-            kwargs = {"desc": show_courses(list(COURSES.values())[:30])}
             if include_dlc:
-                kwargs["fields"] = {
-                    "1.8.0": show_courses(list(COURSES.values())[30:40]),
-                    "1.9.0": show_courses(list(COURSES.values())[40:48])
-                }
-                kwargs["same_line"] = False
+                d = show_courses(list(COURSES.values()))
+            else:
+                d = show_courses(list(COURSES.values())[:30])
         return self.profile_embed(
-            **kwargs,
+            desc=d,
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "
                     f"AF - {round(sum(g.rank for g in timesheet.values()) / len(timesheet), 4)}"
                     if len(timesheet) == num_courses else f"Courses - {len(timesheet)}/{num_courses}"

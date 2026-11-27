@@ -144,14 +144,14 @@ class Record:
             video_link=video_link
         )
 
-    def time_with_link(self):
-        return (f"{'[' if self.video_link else ''}`{prettify_time(self.time)}`"
-                f"{(']('+self.video_link+')') if self.video_link else ''}")
+    def time_with_link(self, allow_link: bool = True):
+        return (f"{'[' if allow_link and self.video_link else ''}`{prettify_time(self.time)}`"
+                f"{(']('+self.video_link+')') if allow_link and self.video_link else ''}")
 
-    def timesheet_display(self):
+    def timesheet_display(self, allow_link: bool = True):
         if not self.time:
-            return self.time_with_link()
-        return f"{self.time_with_link()} - \\#{self.rank}{rank_emoji(self.rank)}"
+            return self.time_with_link(allow_link)
+        return f"{self.time_with_link(allow_link)} - \\#{self.rank}{rank_emoji(self.rank)}"
 
     def age_in_days(self) -> int:
         pb_date = datetime.date.fromisoformat(self.date)
