@@ -73,21 +73,31 @@ class Player(PlayerBase):
             self.timesheet(force_reload=force_reload, include_dlc=include_dlc).items(),
             key=lambda c: c[1].rank if sort == "rank" else c[0]) if v}
         num_courses = len(COURSES) if include_dlc else 30
-        if not any(timesheet.values()):
-            times = "Player has no times submitted."
-        else:
+
+        def show_courses(courses: list[Course]):
             times = ""
             current_cup = ""
-            for en, it in enumerate(timesheet.items()):
-                course = COURSES[it[0]]
+            for course in courses:
                 if course.cup != current_cup and sort == "cup":
                     current_cup = course.cup
                     times += "\n"
                 if sort == "rank" and en % 5 == 0:
                     times += "\n"
-                times += f"**{course.abbrev}** - {it[1].timesheet_display()}\n"
+                times += f"**{course.abbrev}** - {timesheet[course.id].timesheet_display()}\n"
+            return times
+
+        if not any(timesheet.values()):
+            kwargs = {"desc": "Player has no times submitted."}
+        else:
+            kwargs = {"desc": show_courses(list(COURSES.values())[:30])}
+            if include_dlc:
+                kwargs["fields"] = {
+                    "1.8.0": show_courses(list(COURSES.values())[30:40]),
+                    "1.9.0": show_courses(list(COURSES.values())[40:48])
+                }
+                kwargs["same_line"] = False
         return self.profile_embed(
-            desc=times.strip("\n"),
+            **kwargs,
             footer=(f"Total - {prettify_time(sum(g.time for g in timesheet.values()), include_hour=True)} | "
                     f"AF - {round(sum(g.rank for g in timesheet.values()) / len(timesheet), 4)}"
                     if len(timesheet) == num_courses else f"Courses - {len(timesheet)}/{num_courses}"
@@ -153,7 +163,11 @@ class Player(PlayerBase):
         if include_dlc:
             kwargs = {
                 "desc": show_courses(list(COURSES.values())[:30]),
-                "fields": {"DLC": show_courses(list(COURSES.values())[30:])}
+                "fields": {
+                    "1.8.0": show_courses(list(COURSES.values())[30:40]),
+                    "1.9.0": show_courses(list(COURSES.values())[40:48])
+                },
+                "same_line": False
             }
         else:
             kwargs = {"desc": show_courses(list(COURSES.values())[:30])}
