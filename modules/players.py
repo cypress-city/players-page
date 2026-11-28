@@ -78,14 +78,15 @@ class Player(PlayerBase):
             times = ""
             current_cup = ""
             if sort == "rank":
-                courses = sorted(courses, key=lambda c: timesheet[c.id].rank)
+                courses = sorted(courses, key=lambda c: timesheet[c.id].rank if c.id in timesheet else -1)
             for en, course in enumerate(courses):
                 if course.cup != current_cup and sort == "cup":
                     current_cup = course.cup
                     times += "\n"
                 if sort == "rank" and en % 5 == 0:
                     times += "\n"
-                times += f"**{course.abbrev}** - {timesheet[course.id].timesheet_display(allow_link)}\n"
+                if course.id in timesheet:
+                    times += f"**{course.abbrev}** - {timesheet[course.id].timesheet_display(allow_link)}\n"
             if len(times) > 4096:
                 return "-# Video links have been omitted due to character limits.\n" + \
                     show_courses(courses, allow_link=False)
